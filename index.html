@@ -790,6 +790,15 @@
                 }
             });
 
+            // Blow up all visible power-ups on screen
+            powerups.items.forEach(p => {
+                if (!p.collected && p.x > -powerups.size && p.x < LOGICAL_WIDTH) {
+                    p.collected = true;
+                    effects.addExplosion(p.x + 12, p.y + 12, ['#ffffff', '#ffff00', '#ffaa00'], 15, 0.6, 0.08, true);
+                    effects.addText(p.x + 12, p.y, "POP!", "#ffff00");
+                }
+            });
+
             setTimeout(() => {
                 if (currentState === state.game || currentState === state.over) {
                     currentState = state.over;
