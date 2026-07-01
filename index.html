@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flappy Creeper: Dimensions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #111; font-family: 'Press Start 2P', cursive; touch-action: none; }
+        #game-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        canvas { background-color: #78A7FF; box-shadow: 0 0 30px rgba(0,0,0,0.9); image-rendering: pixelated; }
+        .pixel-text-shadow { text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000; }
+        .pixel-text-shadow-sm { text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        @keyframes flashText { 0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); } 50% { opacity: 0.8; transform: scale(1.15) rotate(2deg); } }
+        .status-alert { animation: flashText 0.4s infinite; }
+        .pointer-events-auto { pointer-events: auto; }
+        
+        .level-btn {
+            background: rgba(0,0,0,0.8); border: 4px solid #555; padding: 15px; width: 100%; margin-bottom: 10px;
+            color: white; font-family: 'Press Start 2P', cursive; text-align: left; cursor: pointer; transition: 0.2s;
+        }
+        .level-btn:hover:not(:disabled) { transform: scale(1.05); border-color: #4de04d; }
+        .level-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: #333; }
+        .level-btn.unlocked { border-color: #FFD700; }
+        .level-title { font-size: 14px; margin-bottom: 8px; color: #FFD700; }
+        .level-goal { font-size: 10px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- UI Overlay -->
+    <div id="ui" class="ui-layer">
+        
+        <!-- Level Select Menu -->
+        <div id="menuScreen" class="flex flex-col items-center justify-center text-center transition-opacity duration-300 bg-black/80 w-full h-full p-4 pointer-events-auto">
+            <h1 class="text-3xl md:text-5xl text-green-400 pixel-text-shadow mb-8 tracking-widest leading-tight mt-4" style="animation: flashText 2s infinite;">FLAPPY<br>CREEPER</h1>
+            
+            <div class="w-full max-w-sm flex flex-col gap-2">
+                <button id="btnLvl0" class="level-btn unlocked" onclick="startGame(0)">
+                    <div class="level-title">1. THE OVERWORLD</div>
+                    <div class="level-goal">Goal: 20 Points</div>
+                </button>
+                <button id="btnLvl1" class="level-btn" onclick="startGame(1)" disabled>
+                    <div class="level-title text-red-400">2. THE NETHER</div>
+                    <div class="level-goal" id="goalLvl1">Goal: 30 Points (Locked)</div>
+                </button>
+                <button id="btnLvl2" class="level-btn" onclick="startGame(2)" disabled>
+                    <div class="level-title text-purple-400">3. THE END</div>
+                    <div class="level-goal" id="goalLvl2">Goal: 40 Points (Locked)</div>
+                </button>
+            </div>
+            
+            <div class="mt-8 text-white text-[10px] md:text-xs pixel-text-shadow max-w-sm bg-black/50 p-4 rounded border border-gray-600">
+                <p class="mb-2 text-yellow-400">HOW TO PLAY:</p>
+                Tap or Space to fly. Dodge pillars and enemies. Collect shiny items for points and epic power-ups!
+            </div>
+        </div>
+
+        <!-- In-Game HUD -->
+        <div id="hud" class="absolute top-10 w-full flex flex-col items-center hidden pointer-events-none">
+            <div class="flex gap-4 items-center">
+                <div id="scoreDisplay" class="text-5xl text-white pixel-text-shadow transition-transform">0</div>
+                <div class="text-xl text-gray-300 pixel-text-shadow">/ <span id="goalDisplay">20</span></div>
+            </div>
+            <div id="statusContainer" class="mt-4 flex flex-col items-center gap-1">
+                <div id="transformAlert" class="text-white text-sm pixel-text-shadow status-alert hidden">MODE ACTIVE</div>
+            </div>
+        </div>
+
+        <!-- Game Over / Level Complete Screen -->
+        <div id="endScreen" class="hidden flex-col items-center justify-center text-center bg-black/80 w-full h-full p-6 pointer-events-auto">
+            <h2 id="endTitle" class="text-4xl text-red-500 pixel-text-shadow mb-4 tracking-widest">BOOM!</h2>
+            
+            <div class="bg-gray-900 border-4 border-gray-600 p-6 rounded shadow-lg flex flex-col items-center gap-4 mb-8">
+                <div class="text-white text-lg pixel-text-shadow">SCORE</div>
+                <div id="finalScore" class="text-4xl text-yellow-400 pixel-text-shadow">0</div>
+            </div>
+
+            <button onclick="goToMenu()" class="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-8 border-b-4 border-green-800 hover:border-green-600 rounded text-xl pixel-text-shadow transition-all">
+                MENU
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const LOGICAL_WIDTH = 400; const LOGICAL_HEIGHT = 600;
+    
+    // UI Elements
+    const menuScreen = document.getElementById('menuScreen');
+    const endScreen = document.getElementById('endScreen');
+    const hud = document.getElementById('hud');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const goalDisplay = document.getElementById('goalDisplay');
+    const endTitle = document.getElementById('endTitle');
+    const transformAlert = document.getElementById('transformAlert');
+    const finalScoreEl = document.getElementById('finalScore');
+    
+    // Buttons
+    const btnLvl1 = document.getElementById('btnLvl1');
+    const btnLvl2 = document.getElementById('btnLvl2');
+    const goalLvl1 = document.getElementById('goalLvl1');
+    const goalLvl2 = document.getElementById('goalLvl2');
+
+    let frames = 0;       // Real-time frames (for UI, player anims)
+    let gameFrames = 0;   // Dynamic game time (slows down with powerups)
+    let score = 0; 
+    let scaleRatio = 1; let shakeFrames = 0; let shakeIntensity = 0; let flashAlpha = 0;
+
+    const state = { menu: 0, game: 1, over: 2, win: 3 };
+    let currentState = state.menu;
+
+    // Progression System
+    let unlockedLevel = parseInt(localStorage.getItem('flappyCreeperUnlocked2')) || 0;
+    
+    const LEVELS = [
+        {   // 0: OVERWORLD
+            name: "Overworld", winScore: 20, 
+            bg: 'overworld', cloudType: 'fluffy',
+            ground: { top: '#4c9f38', side: '#79553a', detail: '#5c3f29' },
+            pillar: { top: '#4c9f38', side: '#79553a', detail: '#5c3f29' },
+            enemies: ['bat', 'phantom'],
+            points: { small: 'diamond', large: 'emerald' }
+        },
+        {   // 1: NETHER
+            name: "Nether", winScore: 30, 
+            bg: 'nether', cloudType: 'ash',
+            ground: { top: '#d96914', side: '#5e2019', detail: '#3a120e' }, 
+            pillar: { top: '#d96914', side: '#5e2019', detail: '#3a120e' },
+            enemies: ['fireball', 'wither_skull'],
+            points: { small: 'quartz', large: 'gold' }
+        },
+        {   // 2: THE END
+            name: "The End", winScore: 40, 
+            bg: 'end', cloudType: 'void',
+            ground: { top: '#a673a6', side: '#d1cc8c', detail: '#a6a165' }, 
+            pillar: { top: '#a673a6', side: '#d1cc8c', detail: '#a6a165' },
+            enemies: ['vex', 'shulker'],
+            points: { small: 'amethyst', large: 'eye' }
+        }
+    ];
+    let activeLevel = 0;
+
+    function updateMenuLocks() {
+        if (unlockedLevel >= 1) {
+            btnLvl1.disabled = false; btnLvl1.classList.add('unlocked'); goalLvl1.innerText = "Goal: 30 Points";
+        }
+        if (unlockedLevel >= 2) {
+            btnLvl2.disabled = false; btnLvl2.classList.add('unlocked'); goalLvl2.innerText = "Goal: 40 Points";
+        }
+    }
+    updateMenuLocks();
+
+    function triggerShake(framesDur, intensity) { shakeFrames = framesDur; shakeIntensity = intensity; }
+
+    function getGameSpeed() {
+        let difficultyMult = 1.0 + Math.min(1.5, score * 0.025);
+        let speed = difficultyMult;
+        if (creeper.slowMoTimer > 0) speed *= 0.45; 
+        return speed;
+    }
+
+    function addScore(amount) {
+        score += amount;
+        scoreDisplay.innerText = score;
+        scoreDisplay.style.transform = 'scale(1.5)';
+        setTimeout(() => scoreDisplay.style.transform = 'scale(1)', 150);
+        
+        // Win Condition Check
+        if (score >= LEVELS[activeLevel].winScore && currentState === state.game) {
+            triggerWin();
+        }
+    }
+
+    function resizeCanvas() {
+        scaleRatio = Math.min(window.innerWidth / LOGICAL_WIDTH, window.innerHeight / LOGICAL_HEIGHT);
+        if (scaleRatio > 1.5) scaleRatio = 1.5; 
+        canvas.width = LOGICAL_WIDTH; canvas.height = LOGICAL_HEIGHT;
+        canvas.style.width = `${LOGICAL_WIDTH * scaleRatio}px`; canvas.style.height = `${LOGICAL_HEIGHT * scaleRatio}px`;
+    }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    // ----------------------------------------------------
+    // JUICE EFFECTS 
+    // ----------------------------------------------------
+    const effects = {
+        particles: [], floatingTexts: [],
+        addExplosion(x, y, colorPalette, amount, speedMult = 1, lifeDecay = 0.02, ignoreGravity = false) {
+            for(let i=0; i<amount; i++) {
+                this.particles.push({
+                    x: x, y: y, vx: (Math.random() - 0.5) * 15 * speedMult, vy: (Math.random() - 0.5) * 15 * speedMult - (ignoreGravity ? 0 : 2),
+                    size: Math.random() * 8 + 4, color: colorPalette[Math.floor(Math.random() * colorPalette.length)],
+                    life: 1.0, decay: lifeDecay, ig: ignoreGravity
+                });
+            }
+        },
+        addText(x, y, text, color) { this.floatingTexts.push({ x: x, y: y, text: text, color: color, life: 1.0, vy: -1.5 }); },
+        update() {
+            let speed = getGameSpeed();
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+                let p = this.particles[i]; p.x += p.vx * speed; p.y += p.vy * speed;
+                if (!p.ig) p.vy += 0.2 * Math.max(1, speed); p.life -= p.decay * speed;
+                if (p.life <= 0) this.particles.splice(i, 1);
+            }
+            for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                let ft = this.floatingTexts[i]; ft.y += ft.vy * speed; ft.life -= 0.02 * speed;
+                if (ft.life <= 0) this.floatingTexts.splice(i, 1);
+            }
+            if (flashAlpha > 0) flashAlpha -= 0.05 * speed;
+        },
+        draw() {
+            this.particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
+            ctx.textAlign = 'center'; ctx.font = "12px 'Press Start 2P'";
+            this.floatingTexts.forEach(ft => {
+                ctx.globalAlpha = ft.life; ctx.fillStyle = '#000'; ctx.fillText(ft.text, ft.x+2, ft.y+2);
+                ctx.fillStyle = ft.color; ctx.fillText(ft.text, ft.x, ft.y);
+            });
+            ctx.globalAlpha = 1.0;
+        },
+        reset() { this.particles = []; this.floatingTexts = []; flashAlpha = 0; }
+    };
+
+    // ----------------------------------------------------
+    // PLAYER PROJECTILES (BLAZE MODE)
+    // ----------------------------------------------------
+    const playerProjectiles = {
+        items: [],
+        spawn(x, y) { this.items.push({ x: x, y: y, w: 12, h: 12, vx: 8 }); effects.addExplosion(x, y, ['#ffaa00', '#ffff00'], 5, 0.5, 0.1, true); },
+        update() {
+            if (currentState !== state.game) return;
+            let speed = getGameSpeed();
+            for (let i = this.items.length - 1; i >= 0; i--) {
+                let p = this.items[i]; p.x += p.vx * speed;
+                effects.addExplosion(p.x, p.y + 6, ['#ff4400', '#ffaa00'], 1, 0.2, 0.1, true);
+
+                let hitSomething = false;
+                enemies.items.forEach(e => {
+                    if (!e.destroyed && p.x < e.x + e.w && p.x + p.w > e.x && p.y < e.y + e.h && p.y + p.h > e.y) {
+                        e.destroyed = true; addScore(3); triggerShake(5, 4);
+                        effects.addExplosion(e.x + e.w/2, e.y + e.h/2, ['#ff8800', '#ff0000', '#ffffff'], 20, 1);
+                        effects.addText(e.x + e.w/2, e.y, "BURNT!", "#ff8800"); hitSomething = true;
+                    }
+                });
+
+                pillars.items.forEach(pil => {
+                    if (!pil.destroyed && p.x < pil.x + pillars.width && p.x + p.w > pil.x) {
+                        if (p.y < pil.top || p.y + p.h > pil.bottom) {
+                            pil.destroyed = true; addScore(2); triggerShake(8, 6);
+                            let lvl = LEVELS[activeLevel].pillar;
+                            effects.addExplosion(pil.x + pillars.width/2, p.y, [lvl.top, lvl.side, '#ffaa00'], 25, 1.2);
+                            effects.addText(pil.x + pillars.width/2, p.y, "SMASH!", "#ffaa00"); hitSomething = true;
+                        }
+                    }
+                });
+
+                if (hitSomething || p.x > LOGICAL_WIDTH) this.items.splice(i, 1);
+            }
+        },
+        draw() { this.items.forEach(p => { ctx.fillStyle = '#ffaa00'; ctx.fillRect(p.x, p.y, p.w, p.h); ctx.fillStyle = '#ffff00'; ctx.fillRect(p.x+2, p.y+2, p.w-4, p.h-4); }); },
+        reset() { this.items = []; }
+    };
+
+    // ----------------------------------------------------
+    // BACKGROUND & GROUND 
+    // ----------------------------------------------------
+    const bg = {
+        clouds: [],
+        init() {
+            this.clouds = [];
+            for(let i=0; i<8; i++) {
+                this.clouds.push({ x: Math.random() * LOGICAL_WIDTH, y: Math.random() * (LOGICAL_HEIGHT / 2), w: 30 + Math.random() * 50, h: 10 + Math.random() * 15, speed: 0.1 + Math.random() * 0.3 });
+            }
+        },
+        getSkyColor() {
+            if (creeper.slowMoTimer > 0) return '#447799'; 
+            let lvlBg = LEVELS[activeLevel].bg;
+            if (lvlBg === 'overworld') {
+                let cycle = Math.sin(gameFrames / 600); let lightness = 42.5 + cycle * 27.5; let hue = 215;
+                if (cycle < 0 && cycle > -0.5) hue = 260; else if (cycle <= -0.5) hue = 230;
+                return `hsl(${hue}, 100%, ${lightness}%)`;
+            } else if (lvlBg === 'nether') return '#3a0909';
+            else if (lvlBg === 'end') return '#110022';
+        },
+        draw() {
+            ctx.fillStyle = this.getSkyColor(); ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+            let type = LEVELS[activeLevel].cloudType;
+            this.clouds.forEach(c => {
+                if (type === 'fluffy') {
+                    ctx.fillStyle = creeper.slowMoTimer > 0 ? 'rgba(200, 230, 255, 0.7)' : 'rgba(255, 255, 255, 0.7)';
+                    ctx.fillRect(c.x, c.y, c.w, c.h); ctx.fillRect(c.x + 10, c.y - 10, c.w - 20, c.h + 20);
+                } else if (type === 'ash') {
+                    ctx.fillStyle = 'rgba(255, 100, 50, 0.2)';
+                    ctx.fillRect(c.x, c.y, c.w, c.h/2);
+                } else if (type === 'void') {
+                    ctx.fillStyle = 'rgba(200, 50, 255, 0.15)';
+                    ctx.fillRect(c.x, c.y, c.w/2, c.h*2);
+                }
+            });
+        },
+        update() {
+            if (currentState !== state.game) return;
+            let speed = getGameSpeed();
+            this.clouds.forEach(c => {
+                c.x -= c.speed * speed;
+                if (c.x + c.w < 0) { c.x = LOGICAL_WIDTH; c.y = Math.random() * (LOGICAL_HEIGHT / 2); }
+            });
+        }
+    };
+
+    const ground = {
+        h: 80, y: LOGICAL_HEIGHT - 80, x: 0, dx: 3,
+        draw() {
+            let colors = LEVELS[activeLevel].ground;
+            ctx.fillStyle = colors.side; ctx.fillRect(0, this.y, LOGICAL_WIDTH, this.h);
+            ctx.fillStyle = colors.top; ctx.fillRect(0, this.y, LOGICAL_WIDTH, 15);
+            ctx.fillStyle = colors.detail;
+            for(let i=0; i<this.h; i+=20) {
+                for(let j= -20; j<LOGICAL_WIDTH+20; j+=20) {
+                    if ((i+(j-this.x))%60 === 0) ctx.fillRect(j + (this.x % 20), this.y + i + 15, 10, 10);
+                }
+            }
+        },
+        update() { if (currentState === state.game) this.x = (this.x - this.dx * getGameSpeed()) % 20; }
+    };
+
+    // ----------------------------------------------------
+    // PLAYER (CREEPER)
+    // ----------------------------------------------------
+    const creeper = {
+        baseSize: 32, currentSize: 32, x: 80, y: 200, velocity: 0, gravityBase: 0.25, gravityActive: 0.25, jump: 5.5, rotation: 0, exploded: false,
+        invincibleTimer: 0, shrinkTimer: 0, phaseTimer: 0, slowMoTimer: 0, transformTimer: 0, transform: 'none',
+
+        draw() {
+            if (this.exploded) return;
+            let s = this.currentSize; let cx = -s/2; let cy = -s/2;
+
+            ctx.save(); ctx.translate(this.x + s/2, this.y + s/2); ctx.rotate(this.rotation);
+
+            if (this.phaseTimer > 0) {
+                let pulse = Math.abs(Math.sin(frames / 10)); ctx.globalAlpha = 0.4 + (pulse * 0.2); 
+                ctx.shadowColor = '#aa00ff'; ctx.shadowBlur = 15;
+            }
+
+            // Anims use real "frames" so the player feels fast during slowmo
+            if (this.transform === 'elytra') {
+                ctx.fillStyle = '#555566'; let spread = this.velocity < 0 ? -Math.PI/6 : Math.PI/12;
+                ctx.save(); ctx.translate(cx, cy + 4); ctx.rotate(spread); ctx.fillRect(-s*0.8, 0, s*0.8, s*1.2); ctx.fillStyle = '#777788'; ctx.fillRect(-s*0.8+2, 2, s*0.8-4, s*1.2-4); ctx.restore();
+                ctx.save(); ctx.translate(cx + s, cy + 4); ctx.rotate(-spread); ctx.fillStyle = '#555566'; ctx.fillRect(0, 0, s*0.8, s*1.2); ctx.fillStyle = '#777788'; ctx.fillRect(2, 2, s*0.8-4, s*1.2-4); ctx.restore();
+            } else {
+                ctx.fillStyle = '#ffffff'; let flapAngle = this.velocity < 0 ? -Math.PI/3 : Math.PI/6;
+                if (this.velocity < 0) flapAngle += Math.sin(frames) * 0.2;
+                ctx.save(); ctx.translate(cx + 4, cy + s/2); ctx.rotate(flapAngle); ctx.fillRect(-s/2, -4, s/2, 8); ctx.fillStyle = '#dddddd'; ctx.fillRect(-s/2, 0, s/2, 4); ctx.restore();
+                ctx.save(); ctx.translate(cx + s - 4, cy + s/2); ctx.rotate(-flapAngle); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, -4, s/2, 8); ctx.fillStyle = '#dddddd'; ctx.fillRect(0, 0, s/2, 4); ctx.restore();
+            }
+
+            let isGolden = this.invincibleTimer > 0 && !(this.invincibleTimer < 60 && frames % 10 < 5);
+            if (this.transform === 'slime' && this.phaseTimer <= 0) ctx.globalAlpha = 0.85; 
+            
+            if (isGolden) { ctx.fillStyle = '#FFD700'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#FFA500'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4); } 
+            else if (this.transform === 'slime') { ctx.fillStyle = '#55ff55'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#aaffaa'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4); } 
+            else if (this.transform === 'elytra') { ctx.fillStyle = '#9999aa'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#777788'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4); } 
+            else if (this.transform === 'blaze') { ctx.fillStyle = '#ff8800'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#ffff00'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4); } 
+            else {
+                ctx.fillStyle = '#10c010'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#14d814'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4);
+                ctx.fillStyle = '#0b8e0b'; ctx.fillRect(cx+s*0.75, cy, s/4, s/4); ctx.fillRect(cx+s/4, cy+s*0.75, s/4, s/4);
+            }
+
+            if (this.phaseTimer > 0) { ctx.fillStyle = 'rgba(150, 0, 255, 0.3)'; ctx.fillRect(cx, cy, s, s); }
+
+            ctx.fillStyle = '#000000'; let p = s / 8;
+            ctx.fillRect(cx + p*1, cy + p*2, p*2, p*2); ctx.fillRect(cx + p*5, cy + p*2, p*2, p*2); 
+            ctx.fillRect(cx + p*3, cy + p*4, p*2, p*3); ctx.fillRect(cx + p*2, cy + p*5, p*1, p*3); ctx.fillRect(cx + p*5, cy + p*5, p*1, p*3); 
+
+            if (isGolden) { ctx.strokeStyle = `rgba(255, 215, 0, ${Math.abs(Math.sin(frames/10))})`; ctx.lineWidth = 3; ctx.strokeRect(cx-2, cy-2, s+4, s+4); }
+            if (this.phaseTimer > 0) { ctx.strokeStyle = `rgba(170, 0, 255, 0.8)`; ctx.lineWidth = 2; ctx.strokeRect(cx-2, cy-2, s+4, s+4); }
+            if (this.transform === 'blaze') {
+                ctx.fillStyle = '#ffff00';
+                for(let i=0; i<3; i++) {
+                    let angle = (frames / 15) + (i * Math.PI * 2 / 3); let rodX = Math.cos(angle) * (s*0.8); let rodY = Math.sin(angle) * (s*0.8);
+                    ctx.fillRect(rodX - 2, rodY - 6, 4, 12);
+                }
+            }
+            ctx.restore();
+        },
+
+        update() {
+            if (this.exploded) return;
+
+            if (this.invincibleTimer > 0) this.invincibleTimer--;
+            if (this.phaseTimer > 0) this.phaseTimer--;
+            if (this.slowMoTimer > 0) this.slowMoTimer--;
+            
+            if (this.shrinkTimer > 0) {
+                this.shrinkTimer--; this.currentSize = 16; 
+                if (this.shrinkTimer === 0) { this.currentSize = this.baseSize; this.y -= 8; }
+            } else { this.currentSize = this.baseSize; }
+
+            if (this.transformTimer > 0) {
+                if (--this.transformTimer === 0) { this.transform = 'none'; transformAlert.classList.add('hidden'); }
+            } else { this.transform = 'none'; }
+
+            if (this.transform === 'elytra' && this.velocity > 0) this.gravityActive = this.gravityBase * 0.15; 
+            else this.gravityActive = this.gravityBase;
+
+            if (currentState === state.menu) {
+                this.y = 200 + Math.cos(frames / 15) * 5; this.rotation = 0;
+            } else {
+                // Player physics are immune to the game time slow down!
+                this.velocity += this.gravityActive; this.y += this.velocity;
+                if (this.y < 0) { this.y = 0; this.velocity = 0; }
+                if (this.y + this.currentSize >= ground.y) {
+                    if (this.transform === 'slime') {
+                        this.y = ground.y - this.currentSize; this.velocity = -this.jump * 1.4; 
+                        addScore(1); triggerShake(8, 4);
+                        effects.addExplosion(this.x + this.currentSize/2, ground.y, ['#55ff55', '#aaffaa'], 15, 0.8);
+                        effects.addText(this.x + this.currentSize/2, this.y - 10, "BOING!", "#55ff55");
+                    } else {
+                        this.y = ground.y - this.currentSize; this.triggerGameOver();
+                    }
+                }
+                if (this.velocity >= this.jump) this.rotation = Math.min(Math.PI / 4, this.rotation + 0.05);
+                else this.rotation = -Math.PI / 8;
+            }
+        },
+
+        flap() {
+            this.velocity = -this.jump * (this.transform === 'elytra' ? 0.85 : 1);
+            if (currentState === state.game) {
+                effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize, ['#ffffff', '#cccccc'], 3, 0.2, 0.05, false);
+                if (this.transform === 'blaze') playerProjectiles.spawn(this.x + this.currentSize, this.y + this.currentSize/2 - 6);
+            }
+        },
+
+        triggerGameOver() {
+            if (currentState !== state.over && currentState !== state.win) {
+                currentState = state.over; this.exploded = true;
+                triggerShake(30, 20); flashAlpha = 1.0;
+                effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize/2, ['#ffffff', '#ffaa00', '#ff0000', '#444444', '#10c010'], 100, 2);
+                
+                hud.classList.add('hidden');
+                endScreen.classList.remove('hidden'); endScreen.classList.add('flex');
+                endTitle.innerText = "BOOM!"; endTitle.className = "text-4xl text-red-500 pixel-text-shadow mb-4 tracking-widest";
+                finalScoreEl.innerText = score;
+            }
+        },
+
+        getHitbox() {
+            let padding = 4; return { left: this.x + padding, right: this.x + this.currentSize - padding, top: this.y + padding, bottom: this.y + this.currentSize - padding };
+        },
+
+        setTransform(type, name, colorClass) {
+            this.transform = type; this.transformTimer = 480; 
+            transformAlert.innerText = name; transformAlert.innerHTML = `<span class="${colorClass}">${name}</span>`; transformAlert.classList.remove('hidden');
+        },
+
+        reset() {
+            this.x = 80; this.y = 200; this.velocity = 0; this.rotation = 0; this.exploded = false;
+            this.invincibleTimer = 0; this.shrinkTimer = 0; this.transformTimer = 0; this.phaseTimer = 0; this.slowMoTimer = 0;
+            this.transform = 'none'; this.currentSize = this.baseSize; this.gravityActive = this.gravityBase;
+            transformAlert.classList.add('hidden');
+        }
+    };
+
+    // ----------------------------------------------------
+    // POWER-UPS
+    // ----------------------------------------------------
+    const powerups = {
+        items: [], size: 24, dx: 3,
+
+        draw() {
+            this.items.forEach(p => {
+                if (p.collected) return;
+                let floatY = p.y + Math.sin((gameFrames + p.x) / 15) * 5; // Slow mo float!
+                ctx.save(); ctx.translate(p.x, floatY);
+
+                if (p.type === 'diamond') {
+                    ctx.fillStyle = '#4ae8e8'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
+                    ctx.fillStyle = '#bdfdfd'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 10); ctx.lineTo(4, 8); ctx.fill();
+                } else if (p.type === 'emerald') {
+                    ctx.fillStyle = '#4de04d'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(16, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
+                    ctx.fillStyle = '#90f090'; ctx.beginPath(); ctx.moveTo(9, 2); ctx.lineTo(15, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 11); ctx.lineTo(4, 8); ctx.fill();
+                } else if (p.type === 'quartz') {
+                    ctx.fillStyle = '#e5e5e5'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
+                    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 10); ctx.lineTo(4, 8); ctx.fill();
+                } else if (p.type === 'gold') {
+                    ctx.fillStyle = '#d4af37'; ctx.fillRect(4, 8, 16, 8); ctx.fillStyle = '#fceabb'; ctx.fillRect(6, 10, 12, 2);
+                } else if (p.type === 'amethyst') {
+                    ctx.fillStyle = '#9966cc'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(20, 12); ctx.lineTo(12, 24); ctx.lineTo(4, 12); ctx.fill();
+                    ctx.fillStyle = '#d8b2ff'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(18, 12); ctx.lineTo(12, 14); ctx.lineTo(6, 12); ctx.fill();
+                } else if (p.type === 'eye') {
+                    ctx.fillStyle = '#aaddaa'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#003300'; ctx.beginPath(); ctx.arc(12, 12, 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#000'; ctx.fillRect(11, 10, 2, 4);
+                } else if (p.type === 'apple') {
+                    ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(12, 14, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#5c3f29'; ctx.fillRect(11, 0, 3, 6); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(6, 10, 4, 4);
+                } else if (p.type === 'chorus') {
+                    ctx.fillStyle = '#a040a0'; ctx.fillRect(6, 6, 12, 12); ctx.fillStyle = '#d080d0'; ctx.fillRect(4, 10, 16, 4); ctx.fillRect(10, 4, 4, 16); ctx.fillStyle = '#fff'; ctx.fillRect(10, 10, 4, 4);
+                } else if (p.type === 'tnt') {
+                    ctx.fillStyle = '#db2f2f'; ctx.fillRect(2, 2, 20, 20); ctx.fillStyle = '#ffffff'; ctx.fillRect(2, 8, 20, 8); ctx.fillStyle = '#000000'; ctx.font = "6px 'Press Start 2P'"; ctx.fillText("TNT", 4, 15);
+                } else if (p.type === 'slime') {
+                    ctx.fillStyle = '#55ff55'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#aaffaa'; ctx.fillRect(6, 6, 4, 4); 
+                } else if (p.type === 'elytra') {
+                    ctx.fillStyle = '#777788'; ctx.beginPath(); ctx.moveTo(12, 4); ctx.lineTo(20, 20); ctx.lineTo(12, 16); ctx.lineTo(4, 20); ctx.fill();
+                } else if (p.type === 'blaze') {
+                    ctx.fillStyle = '#ffaa00'; ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffff00'; ctx.fillRect(10, 0, 4, 8); ctx.fillRect(10, 16, 4, 8); ctx.fillRect(0, 10, 8, 4); ctx.fillRect(16, 10, 8, 4);
+                } else if (p.type === 'pearl') {
+                    ctx.fillStyle = '#33aaaa'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#115555'; ctx.beginPath(); ctx.arc(12, 12, 5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#66ffff'; ctx.fillRect(7, 7, 3, 3);
+                } else if (p.type === 'clock') {
+                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(12, 12, 11, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#000000'; ctx.fillRect(11, 6, 2, 6); ctx.fillRect(11, 11, 5, 2); 
+                }
+                ctx.restore();
+            });
+        },
+
+        update() {
+            if (currentState !== state.game) return;
+            let speed = getGameSpeed();
+            this.items.forEach((p, i) => {
+                p.x -= this.dx * speed;
+                if (!p.collected && !creeper.exploded) {
+                    let floatY = p.y + Math.sin((gameFrames + p.x) / 15) * 5;
+                    let hb = creeper.getHitbox();
+                    if (hb.right > p.x && hb.left < p.x + this.size && hb.bottom > floatY && hb.top < floatY + this.size) this.collect(p, floatY);
+                }
+                if (p.x + this.size < 0) this.items.splice(i, 1);
+            });
+        },
+
+        collect(p, actY) {
+            p.collected = true; let cx = p.x + 12; let cy = actY + 12;
+            
+            if (['diamond','quartz','amethyst'].includes(p.type)) {
+                addScore(5); effects.addExplosion(cx, cy, ['#4ae8e8', '#ffffff'], 15, 0.5); effects.addText(cx, cy, "+5", "#4ae8e8");
+            } else if (['emerald','gold','eye'].includes(p.type)) {
+                addScore(10); effects.addExplosion(cx, cy, ['#4de04d', '#ffffff'], 20, 0.6); effects.addText(cx, cy, "+10", "#4de04d");
+            } else if (p.type === 'apple') {
+                creeper.invincibleTimer = 360; effects.addExplosion(cx, cy, ['#FFD700', '#FFA500', '#FFFFFF'], 20, 0.5); effects.addText(cx, cy, "INVINCIBLE", "#FFD700");
+            } else if (p.type === 'chorus') {
+                creeper.shrinkTimer = 480; effects.addExplosion(cx, cy, ['#a040a0', '#ffffff'], 20, 0.5); effects.addText(cx, cy, "SHRINK", "#a040a0");
+            } else if (p.type === 'tnt') {
+                this.triggerTNT(cx, cy);
+            } else if (p.type === 'slime') {
+                creeper.setTransform('slime', 'SLIME BOUNCE!', 'text-green-400'); effects.addExplosion(cx, cy, ['#55ff55', '#aaffaa'], 25, 0.8);
+            } else if (p.type === 'elytra') {
+                creeper.setTransform('elytra', 'ELYTRA GLIDE!', 'text-gray-300'); effects.addExplosion(cx, cy, ['#777788', '#ffffff'], 25, 0.8);
+            } else if (p.type === 'blaze') {
+                creeper.setTransform('blaze', 'BLAZE FIRE!', 'text-orange-400'); effects.addExplosion(cx, cy, ['#ffaa00', '#ff0000'], 30, 1.0);
+            } else if (p.type === 'pearl') {
+                creeper.phaseTimer = 360; effects.addExplosion(cx, cy, ['#33aaaa', '#cc00ff'], 25, 0.8); effects.addText(cx, cy, "PHASE", "#66ffff");
+            } else if (p.type === 'clock') {
+                creeper.slowMoTimer = 480; effects.addExplosion(cx, cy, ['#ffd700', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SLOW MO", "#ffd700");
+            }
+        },
+
+        triggerTNT(x, y) {
+            triggerShake(20, 15); flashAlpha = 1.0;
+            effects.addExplosion(x, y, ['#ff0000', '#ffaa00', '#ffffff', '#555555'], 100, 2.5);
+            pillars.items.forEach(p => {
+                if (!p.destroyed && p.x > -pillars.width && p.x < LOGICAL_WIDTH) {
+                    p.destroyed = true; addScore(2);
+                    let lvl = LEVELS[activeLevel].pillar;
+                    effects.addExplosion(p.x + pillars.width/2, LOGICAL_HEIGHT/2, [lvl.top, lvl.side, '#ffaa00'], 30, 1.5);
+                    effects.addText(p.x + pillars.width/2, LOGICAL_HEIGHT/2, "SMASH!", "#ffaa00");
+                }
+            });
+            enemies.items.forEach(e => {
+                if (!e.destroyed && e.x > -50 && e.x < LOGICAL_WIDTH) {
+                    e.destroyed = true; addScore(5);
+                    effects.addExplosion(e.x + e.w/2, e.y + e.h/2, ['#ff0000', '#ffaa00', '#ffffff'], 20, 1);
+                    effects.addText(e.x + e.w/2, e.y, "BOOM!", "#ffaa00");
+                }
+            });
+        },
+        reset() { this.items = []; }
+    }
+
+    // ----------------------------------------------------
+    // ENEMIES (SLOW MO SYNCED)
+    // ----------------------------------------------------
+    const enemies = {
+        items: [],
+
+        draw() {
+            this.items.forEach(e => {
+                if (e.destroyed) return;
+                ctx.save(); ctx.translate(e.x, e.y);
+
+                // Use gameFrames for all animations so they slow down in slow-mo!
+                if (e.type === 'bat') {
+                    let flapDown = (Math.floor(gameFrames) % 20 < 10);
+                    ctx.fillStyle = '#3a2b22'; ctx.fillRect(10, 6, 8, 8); ctx.fillStyle = '#000'; ctx.fillRect(12, 8, 2, 2); ctx.fillRect(14, 8, 2, 2);
+                    ctx.fillStyle = '#221814'; if (flapDown) { ctx.fillRect(0, 8, 10, 8); ctx.fillRect(18, 8, 10, 8); } else { ctx.fillRect(0, 2, 10, 8); ctx.fillRect(18, 2, 10, 8); }
+                } else if (e.type === 'fireball') {
+                    ctx.fillStyle = '#ff8800'; ctx.fillRect(0, 0, 20, 20); ctx.fillStyle = '#ffff00'; ctx.fillRect(4, 4, 12, 12); ctx.fillStyle = '#ffffff'; ctx.fillRect(8, 8, 4, 4);
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'; ctx.fillRect(20, 4, 10 + Math.random()*10, 12);
+                } else if (e.type === 'phantom') {
+                    ctx.fillStyle = '#171738'; let w = e.w; let h = e.h; ctx.fillRect(w/2 - 4, h/2 - 4, 8, 8);
+                    ctx.fillStyle = '#44ff44'; ctx.fillRect(w/2 - 4, h/2 - 2, 2, 2); ctx.fillRect(w/2 + 2, h/2 - 2, 2, 2);
+                    ctx.fillStyle = '#111122';
+                    if (Math.floor(gameFrames) % 16 < 8) { ctx.fillRect(0, h/2 - 6, w/2 - 4, 4); ctx.fillRect(w/2 + 4, h/2 - 6, w/2 - 4, 4); } else { ctx.fillRect(0, h/2, w/2 - 4, 4); ctx.fillRect(w/2 + 4, h/2, w/2 - 4, 4); }
+                    ctx.fillStyle = '#b0b0d0'; ctx.fillRect(w/2, h/2 + 4, 2, 6);
+                } else if (e.type === 'wither_skull') {
+                    ctx.fillStyle = '#333333'; ctx.fillRect(0, 0, 20, 20); ctx.fillStyle = '#111111'; ctx.fillRect(4, 6, 4, 4); ctx.fillRect(12, 6, 4, 4); ctx.fillRect(8, 12, 4, 6);
+                    if (Math.floor(gameFrames) % 3 === 0) effects.addExplosion(e.x + 20, e.y + 10, ['#222222', '#555555'], 1, 0.5, 0.05, true);
+                } else if (e.type === 'vex') {
+                    ctx.fillStyle = '#aaccff'; ctx.fillRect(4, 4, 12, 12); ctx.fillStyle = '#ff0000'; ctx.fillRect(6, 8, 2, 2); ctx.fillRect(12, 8, 2, 2);
+                    ctx.fillStyle = '#cccccc'; ctx.fillRect(8, 16, 4, 6); ctx.fillStyle = '#888888'; ctx.fillRect(-2, 10, 6, 2); ctx.fillRect(-4, 6, 2, 8);
+                    ctx.fillStyle = '#ffffff'; if (Math.floor(gameFrames) % 10 < 5) { ctx.fillRect(12, 2, 6, 4); ctx.fillRect(16, -2, 6, 4); } else { ctx.fillRect(12, 6, 6, 4); ctx.fillRect(16, 8, 6, 4); }
+                } else if (e.type === 'shulker') {
+                    ctx.fillStyle = '#eebdff'; ctx.fillRect(0, 0, 20, 20); ctx.fillStyle = '#cc99cc'; ctx.fillRect(2, 2, 16, 16); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(10, 10, 4, 0, Math.PI*2); ctx.fill(); 
+                    if (Math.floor(gameFrames) % 4 === 0) effects.addExplosion(e.x + 20, e.y + 10, ['#eebdff', '#ffffff'], 1, 0.3, 0.05, true);
+                }
+                ctx.restore();
+            });
+        },
+
+        update() {
+            if (currentState !== state.game) return;
+            let speed = getGameSpeed();
+
+            this.items.forEach((e, i) => {
+                // Use gameFrames for oscillating movement so it physically moves in slow motion
+                if (e.type === 'bat') { 
+                    e.x -= e.dx * speed; 
+                    e.y = e.baseY + Math.sin((gameFrames + e.offset) / 25) * 40; 
+                } 
+                else if (e.type === 'fireball') { 
+                    e.x -= e.dx * speed; 
+                } 
+                else if (e.type === 'phantom') { 
+                    e.x -= e.dx * speed; 
+                    let progress = (LOGICAL_WIDTH - e.x) / LOGICAL_WIDTH; 
+                    if (progress < 0) progress = 0; if (progress > 1) progress = 1; 
+                    e.y = e.baseY + Math.sin(progress * Math.PI) * e.swoopHeight; 
+                } 
+                else if (e.type === 'wither_skull') { 
+                    e.x -= e.dx * speed; 
+                    if (e.y + e.h/2 < creeper.y + creeper.currentSize/2 - 10) e.y += 1.2 * speed; 
+                    if (e.y + e.h/2 > creeper.y + creeper.currentSize/2 + 10) e.y -= 1.2 * speed; 
+                } 
+                else if (e.type === 'vex') { 
+                    e.x -= e.dx * speed; 
+                    e.y = e.baseY + Math.sin((gameFrames + e.offset) / 10) * 90; 
+                } 
+                else if (e.type === 'shulker') { 
+                    e.x -= e.dx * speed;
+                    e.homingTimer += speed; // Custom timer that slows down in slowmo
+                    if (e.homingTimer >= 30) { e.targetY = creeper.y + creeper.currentSize/2 - e.h/2; e.homingTimer = 0; }
+                    e.y += (e.targetY - e.y) * 0.15 * speed; 
+                }
+
+                if (!e.destroyed && !creeper.exploded) {
+                    let hb = creeper.getHitbox();
+                    if (hb.right > e.x && hb.left < e.x + e.w && hb.bottom > e.y && hb.top < e.y + e.h) {
+                        if (creeper.phaseTimer > 0) {
+                            // Phase
+                        } else if (creeper.invincibleTimer > 0) {
+                            e.destroyed = true; addScore(3); triggerShake(5, 5);
+                            let colors = e.type === 'bat' ? ['#3a2b22', '#221814'] : e.type === 'fireball' ? ['#ff8800', '#ff0000'] : e.type === 'phantom' ? ['#171738', '#44ff44'] : e.type === 'vex' ? ['#aaccff', '#ff0000'] : e.type === 'shulker' ? ['#eebdff', '#ffffff'] : ['#333333', '#111111'];
+                            effects.addExplosion(e.x + e.w/2, e.y + e.h/2, colors, 25, 1.2); effects.addText(e.x + e.w/2, e.y, "SMASH!", "#FFD700");
+                        } else {
+                            creeper.triggerGameOver();
+                        }
+                    }
+                }
+                if (e.x + e.w < -50) this.items.splice(i, 1); 
+            });
+        },
+
+        spawn(x, yZoneTop, yZoneBottom) {
+            let typePool = LEVELS[activeLevel].enemies;
+            let type = typePool[Math.floor(Math.random() * typePool.length)];
+            
+            if (type === 'bat') this.items.push({ type: 'bat', x: x, baseY: yZoneTop + (yZoneBottom - yZoneTop) / 2, y: 0, w: 28, h: 16, dx: 2.8, offset: Math.random() * 100, destroyed: false });
+            else if (type === 'fireball') this.items.push({ type: 'fireball', x: x + 100, y: yZoneTop + Math.random() * (yZoneBottom - yZoneTop - 20), w: 20, h: 20, dx: 6, destroyed: false });
+            else if (type === 'phantom') this.items.push({ type: 'phantom', x: x + 50, baseY: -20, swoopHeight: yZoneBottom + 20, y: -20, w: 32, h: 20, dx: 3.0, destroyed: false });
+            else if (type === 'wither_skull') this.items.push({ type: 'wither_skull', x: x + 50, y: yZoneTop + Math.random() * (yZoneBottom - yZoneTop), w: 20, h: 20, dx: 2.5, destroyed: false });
+            else if (type === 'vex') this.items.push({ type: 'vex', x: x + 40, baseY: yZoneTop + (yZoneBottom - yZoneTop) / 2, y: 0, w: 20, h: 24, dx: 3.2, offset: Math.random() * 100, destroyed: false });
+            else if (type === 'shulker') this.items.push({ type: 'shulker', x: x + 80, y: yZoneTop + Math.random() * (yZoneBottom - yZoneTop), targetY: yZoneTop + (yZoneBottom - yZoneTop)/2, w: 20, h: 20, dx: 3.0, homingTimer: 0, destroyed: false });
+        },
+        reset() { this.items = []; }
+    };
+
+    // ----------------------------------------------------
+    // OBSTACLES (PILLARS) & SPAWNER
+    // ----------------------------------------------------
+    const pillars = {
+        items: [], width: 60, gap: 230, dx: 3, distanceCounter: 0, spawnDistance: 240,
+
+        draw() {
+            this.items.forEach(p => {
+                if (p.destroyed) return;
+                if (creeper.phaseTimer > 0) ctx.globalAlpha = 0.6;
+                this.drawBlock(p.x, 0, this.width, p.top, true); 
+                this.drawBlock(p.x, p.bottom, this.width, LOGICAL_HEIGHT - p.bottom - ground.h, false); 
+                ctx.globalAlpha = 1.0;
+            });
+        },
+
+        drawBlock(x, y, w, h, isTop) {
+            let colors = LEVELS[activeLevel].pillar;
+            ctx.fillStyle = colors.side; ctx.fillRect(x, y, w, h);
+            ctx.fillStyle = colors.detail;
+            for(let i=0; i<h; i+=20) {
+                for(let j=0; j<w; j+=20) {
+                    if ((i+j)%60 === 0) ctx.fillRect(x+j, y+i, 10, 10);
+                }
+            }
+            ctx.fillStyle = colors.top;
+            if (isTop) ctx.fillRect(x, y + h - 15, w, 15); else ctx.fillRect(x, y, w, 15);
+        },
+
+        update() {
+            if (currentState !== state.game) return;
+            let speed = getGameSpeed();
+            
+            this.distanceCounter += this.dx * speed;
+            if (this.distanceCounter >= this.spawnDistance) {
+                this.distanceCounter = 0;
+                let maxPos = ground.y - this.gap - 40; let minPos = 40;
+                let topPos = Math.floor(Math.random() * (maxPos - minPos + 1) + minPos);
+                let spawnX = LOGICAL_WIDTH;
+                this.items.push({ x: spawnX, top: topPos, bottom: topPos + this.gap, passed: false, destroyed: false });
+
+                let spawnPowerup = Math.random() < 0.35; 
+                let spawnEnemy = gameFrames > 150 && Math.random() < 0.40; 
+
+                if (spawnPowerup) {
+                    let lvlPoints = LEVELS[activeLevel].points;
+                    let pType = lvlPoints.small; let pRoll = Math.random();
+                    if (pRoll < 0.08) pType = 'tnt'; else if (pRoll < 0.16) pType = lvlPoints.large;
+                    else if (pRoll < 0.26) pType = 'slime'; else if (pRoll < 0.36) pType = 'elytra';
+                    else if (pRoll < 0.46) pType = 'blaze'; else if (pRoll < 0.54) pType = 'chorus';
+                    else if (pRoll < 0.62) pType = 'pearl'; else if (pRoll < 0.70) pType = 'clock';
+                    else if (pRoll < 0.80) pType = 'apple';
+
+                    powerups.items.push({ x: spawnX + this.width/2 - powerups.size/2, y: topPos + this.gap/2 - powerups.size/2, type: pType, collected: false });
+                }
+                if (spawnEnemy) enemies.spawn(spawnX + this.width + 30, topPos, topPos + this.gap);
+            }
+
+            this.items.forEach((p, i) => {
+                p.x -= this.dx * speed;
+                if (!p.destroyed && !creeper.exploded) {
+                    let hb = creeper.getHitbox();
+                    if (hb.right > p.x && hb.left < p.x + this.width) {
+                        if (hb.top < p.top || hb.bottom > p.bottom) {
+                            if (creeper.phaseTimer > 0) { } 
+                            else if (creeper.invincibleTimer > 0) {
+                                p.destroyed = true; addScore(2); triggerShake(6, 6);
+                                let lvl = LEVELS[activeLevel].pillar;
+                                effects.addExplosion(p.x + this.width/2, creeper.y + creeper.currentSize/2, [lvl.top, lvl.side, '#4c9f38'], 35, 1.2);
+                                effects.addText(p.x + this.width/2, creeper.y, "SMASH!", "#FFD700");
+                            } else { creeper.triggerGameOver(); }
+                        }
+                    }
+                }
+                if (!p.destroyed && p.x + this.width < creeper.x && !p.passed) { addScore(1); p.passed = true; }
+                if (p.x + this.width < 0) this.items.shift();
+            });
+        },
+        reset() { this.items = []; this.distanceCounter = 0; }
+    };
+
+    // ----------------------------------------------------
+    // GAME LOOP & UI
+    // ----------------------------------------------------
+    function startGame(levelIndex) {
+        if (levelIndex > unlockedLevel) return;
+        activeLevel = levelIndex;
+        
+        // Reset Everything
+        creeper.reset(); pillars.reset(); powerups.reset(); enemies.reset(); effects.reset(); playerProjectiles.reset();
+        score = 0; scoreDisplay.innerText = score; frames = 0; gameFrames = 0;
+        goalDisplay.innerText = LEVELS[activeLevel].winScore;
+        
+        menuScreen.classList.add('hidden');
+        hud.classList.remove('hidden');
+        
+        bg.init();
+        currentState = state.game;
+        creeper.flap();
+    }
+
+    function triggerWin() {
+        currentState = state.win;
+        creeper.exploded = true; 
+        
+        if (activeLevel === unlockedLevel && unlockedLevel < 2) {
+            unlockedLevel++;
+            localStorage.setItem('flappyCreeperUnlocked2', unlockedLevel);
+            updateMenuLocks();
+        }
+
+        hud.classList.add('hidden');
+        endScreen.classList.remove('hidden'); endScreen.classList.add('flex');
+        endTitle.innerText = "LEVEL CLEARED!";
+        endTitle.className = "text-3xl md:text-4xl text-green-400 pixel-text-shadow mb-4 tracking-widest";
+        finalScoreEl.innerText = score;
+    }
+
+    function goToMenu() {
+        endScreen.classList.add('hidden'); endScreen.classList.remove('flex');
+        menuScreen.classList.remove('hidden');
+        currentState = state.menu;
+    }
+
+    function handleInput() {
+        if (currentState === state.game) creeper.flap();
+    }
+
+    window.addEventListener('keydown', (e) => { if ((e.code === 'Space' || e.code === 'ArrowUp') && currentState === state.game) { e.preventDefault(); handleInput(); } });
+    const container = document.getElementById('game-container');
+    container.addEventListener('mousedown', (e) => { if (!e.target.closest('.pointer-events-auto') && currentState === state.game) handleInput(); });
+    container.addEventListener('touchstart', (e) => { if (!e.target.closest('.pointer-events-auto') && currentState === state.game) { e.preventDefault(); handleInput(); } }, { passive: false });
+
+    function draw() {
+        ctx.save(); 
+        if (shakeFrames > 0) { ctx.translate((Math.random() - 0.5) * shakeIntensity, (Math.random() - 0.5) * shakeIntensity); }
+        bg.draw(); pillars.draw(); powerups.draw(); enemies.draw(); playerProjectiles.draw();
+        ground.draw(); creeper.draw(); effects.draw();
+        if (flashAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`; ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT); }
+        ctx.restore(); 
+    }
+
+    function update() {
+        if (currentState !== state.menu) {
+            // Apply game time specifically for slow motion
+            gameFrames += getGameSpeed();
+            bg.update(); pillars.update(); powerups.update(); enemies.update(); playerProjectiles.update();
+            ground.update(); creeper.update(); effects.update();
+        } else {
+            gameFrames++;
+            bg.update(); ground.update(); creeper.update(); 
+        }
+        if (shakeFrames > 0) shakeFrames--;
+        frames++; // Real time frames keep ticking (for UI & Player animations)
+    }
+
+    function loop() { update(); draw(); requestAnimationFrame(loop); }
+
+    bg.init(); loop();
+
+</script>
+</body>
+</html>
