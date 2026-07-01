@@ -18,14 +18,34 @@
         .pointer-events-auto { pointer-events: auto; }
         
         .level-btn {
-            background: rgba(0,0,0,0.8); border: 4px solid #555; padding: 15px; width: 100%; margin-bottom: 10px;
+            background: rgba(0,0,0,0.8); border: 4px solid #555; padding: 12px; width: 100%; margin-bottom: 8px;
             color: white; font-family: 'Press Start 2P', cursive; text-align: left; cursor: pointer; transition: 0.2s;
         }
-        .level-btn:hover:not(:disabled) { transform: scale(1.05); border-color: #4de04d; }
+        .level-btn:hover:not(:disabled) { transform: scale(1.03); border-color: #4de04d; }
         .level-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: #333; }
         .level-btn.unlocked { border-color: #FFD700; }
-        .level-title { font-size: 14px; margin-bottom: 8px; color: #FFD700; }
-        .level-goal { font-size: 10px; color: #aaa; }
+        .level-title { font-size: 11px; margin-bottom: 6px; color: #FFD700; }
+        .level-goal { font-size: 8px; color: #aaa; }
+        
+        .tab-btn {
+            font-family: 'Press Start 2P', cursive;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        #levelListContainer::-webkit-scrollbar {
+            width: 8px;
+        }
+        #levelListContainer::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #333;
+        }
+        #levelListContainer::-webkit-scrollbar-thumb {
+            background: #555;
+            border: 2px solid #222;
+        }
+        #levelListContainer::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
     </style>
 </head>
 <body>
@@ -40,19 +60,16 @@
         <div id="menuScreen" class="flex flex-col items-center justify-center text-center transition-opacity duration-300 bg-black/80 w-full h-full p-4 pointer-events-auto">
             <h1 class="text-3xl md:text-5xl text-green-400 pixel-text-shadow mb-8 tracking-widest leading-tight mt-4" style="animation: flashText 2s infinite;">FLAPPY<br>CREEPER</h1>
             
-            <div class="w-full max-w-sm flex flex-col gap-2">
-                <button id="btnLvl0" class="level-btn unlocked" onclick="startGame(0)">
-                    <div class="level-title">1. THE OVERWORLD</div>
-                    <div class="level-goal">Goal: 20 Points</div>
-                </button>
-                <button id="btnLvl1" class="level-btn" onclick="startGame(1)" disabled>
-                    <div class="level-title text-red-400">2. THE NETHER</div>
-                    <div class="level-goal" id="goalLvl1">Goal: 30 Points (Locked)</div>
-                </button>
-                <button id="btnLvl2" class="level-btn" onclick="startGame(2)" disabled>
-                    <div class="level-title text-purple-400">3. THE END</div>
-                    <div class="level-goal" id="goalLvl2">Goal: 40 Points (Locked)</div>
-                </button>
+            <!-- Dynamic Level Selection Tabs -->
+            <div class="w-full max-w-sm flex gap-1 mb-2 justify-around pointer-events-auto">
+                <button id="tab0" class="tab-btn active border-b-4 border-green-500 text-green-400 text-[10px] py-2 px-1 flex-1 font-bold" onclick="switchTab(0)">OVERWORLD</button>
+                <button id="tab1" class="tab-btn border-b-4 border-transparent text-gray-500 text-[10px] py-2 px-1 flex-1 font-bold" onclick="switchTab(1)">NETHER</button>
+                <button id="tab2" class="tab-btn border-b-4 border-transparent text-gray-500 text-[10px] py-2 px-1 flex-1 font-bold" onclick="switchTab(2)">THE END</button>
+            </div>
+
+            <!-- Dynamic Level List Container -->
+            <div id="levelListContainer" class="w-full max-w-sm flex flex-col gap-2 overflow-y-auto max-h-[220px] pointer-events-auto pr-1">
+                <!-- Level buttons will be injected here dynamically -->
             </div>
             
             <div class="mt-8 text-white text-[10px] md:text-xs pixel-text-shadow max-w-sm bg-black/50 p-4 rounded border border-gray-600">
@@ -103,12 +120,6 @@
     const transformAlert = document.getElementById('transformAlert');
     const finalScoreEl = document.getElementById('finalScore');
     
-    // Buttons
-    const btnLvl1 = document.getElementById('btnLvl1');
-    const btnLvl2 = document.getElementById('btnLvl2');
-    const goalLvl1 = document.getElementById('goalLvl1');
-    const goalLvl2 = document.getElementById('goalLvl2');
-
     let frames = 0;       // Real-time frames (for UI, player anims)
     let gameFrames = 0;   // Dynamic game time (slows down with powerups)
     let score = 0; 
@@ -121,48 +132,273 @@
     let unlockedLevel = parseInt(localStorage.getItem('flappyCreeperUnlocked2')) || 0;
     
     const LEVELS = [
-        {   // 0: OVERWORLD
-            name: "Overworld", winScore: 20, 
+        // ---------------- OVERWORLD (0 - 4) ----------------
+        {
+            name: "Plains", winScore: 15,
             bg: 'overworld', cloudType: 'fluffy',
             ground: { top: '#4c9f38', side: '#79553a', detail: '#5c3f29' },
             pillar: { top: '#4c9f38', side: '#79553a', detail: '#5c3f29' },
-            enemies: ['bat', 'phantom'],
-            points: { small: 'diamond', large: 'emerald' }
+            enemies: ['bat'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.0,
+            pillarGap: 245,
+            spawnDist: 250,
+            powerupChance: 0.35,
+            appleChanceMult: 1.0
         },
-        {   // 1: NETHER
-            name: "Nether", winScore: 30, 
+        {
+            name: "Desert", winScore: 20,
+            bg: 'desert', cloudType: 'fluffy',
+            ground: { top: '#e6c229', side: '#d4a317', detail: '#b7860b' },
+            pillar: { top: '#e6c229', side: '#d4a317', detail: '#b7860b' },
+            enemies: ['bat', 'phantom'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.05,
+            pillarGap: 235,
+            spawnDist: 240,
+            powerupChance: 0.35,
+            appleChanceMult: 1.0
+        },
+        {
+            name: "Cave", winScore: 25,
+            bg: 'cave', cloudType: 'ash',
+            ground: { top: '#555555', side: '#333333', detail: '#222222' },
+            pillar: { top: '#555555', side: '#333333', detail: '#222222' },
+            enemies: ['bat', 'vex'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.1,
+            pillarGap: 225,
+            spawnDist: 230,
+            powerupChance: 0.35,
+            appleChanceMult: 1.1
+        },
+        {
+            name: "Jungle", winScore: 30,
+            bg: 'jungle', cloudType: 'fluffy',
+            ground: { top: '#1b4d3e', side: '#5c4033', detail: '#3d2b1f' },
+            pillar: { top: '#1b4d3e', side: '#5c4033', detail: '#3d2b1f' },
+            enemies: ['bat', 'phantom'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.15,
+            pillarGap: 215,
+            spawnDist: 220,
+            powerupChance: 0.35,
+            appleChanceMult: 1.1
+        },
+        {
+            name: "Stronghold", winScore: 35,
+            bg: 'stronghold', cloudType: 'void',
+            ground: { top: '#6a737b', side: '#4b5257', detail: '#363b3e' },
+            pillar: { top: '#6a737b', side: '#4b5257', detail: '#363b3e' },
+            enemies: ['bat', 'phantom', 'vex'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.2,
+            pillarGap: 205,
+            spawnDist: 210,
+            powerupChance: 0.40,
+            appleChanceMult: 1.2
+        },
+
+        // ---------------- NETHER (5 - 9) ----------------
+        {
+            name: "Nether Wastes", winScore: 25,
             bg: 'nether', cloudType: 'ash',
-            ground: { top: '#d96914', side: '#5e2019', detail: '#3a120e' }, 
+            ground: { top: '#d96914', side: '#5e2019', detail: '#3a120e' },
             pillar: { top: '#d96914', side: '#5e2019', detail: '#3a120e' },
             enemies: ['fireball', 'wither_skull'],
-            points: { small: 'quartz', large: 'gold' }
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.15,
+            pillarGap: 220,
+            spawnDist: 230,
+            powerupChance: 0.35,
+            appleChanceMult: 1.0
         },
-        {   // 2: THE END
-            name: "The End", winScore: 40, 
+        {
+            name: "Soul Sand Valley", winScore: 30,
+            bg: 'soulsand', cloudType: 'ash',
+            ground: { top: '#5c4033', side: '#3d2b1f', detail: '#1a110b' },
+            pillar: { top: '#5c4033', side: '#3d2b1f', detail: '#1a110b' },
+            enemies: ['wither_skull'],
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.2,
+            pillarGap: 210,
+            spawnDist: 220,
+            powerupChance: 0.35,
+            appleChanceMult: 1.1
+        },
+        {
+            name: "Crimson Forest", winScore: 35,
+            bg: 'crimson', cloudType: 'ash',
+            ground: { top: '#900c3f', side: '#581845', detail: '#2c0c22' },
+            pillar: { top: '#900c3f', side: '#581845', detail: '#2c0c22' },
+            enemies: ['fireball'],
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.25,
+            pillarGap: 200,
+            spawnDist: 210,
+            powerupChance: 0.40,
+            appleChanceMult: 1.2
+        },
+        {
+            name: "Warped Forest", winScore: 40,
+            bg: 'warped', cloudType: 'void',
+            ground: { top: '#0e6251', side: '#0b5345', detail: '#073e33' },
+            pillar: { top: '#0e6251', side: '#0b5345', detail: '#073e33' },
+            enemies: ['vex'],
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.3,
+            pillarGap: 195,
+            spawnDist: 200,
+            powerupChance: 0.40,
+            appleChanceMult: 1.2
+        },
+        {
+            name: "Basalt Deltas", winScore: 45,
+            bg: 'basalt', cloudType: 'ash',
+            ground: { top: '#454b1b', side: '#2e3011', detail: '#1a1c0a' },
+            pillar: { top: '#454b1b', side: '#2e3011', detail: '#1a1c0a' },
+            enemies: ['fireball', 'shulker'],
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.35,
+            pillarGap: 190,
+            spawnDist: 190,
+            powerupChance: 0.45,
+            appleChanceMult: 1.3
+        },
+
+        // ---------------- THE END (10 - 14) ----------------
+        {
+            name: "End Barrens", winScore: 35,
             bg: 'end', cloudType: 'void',
-            ground: { top: '#a673a6', side: '#d1cc8c', detail: '#a6a165' }, 
+            ground: { top: '#a673a6', side: '#d1cc8c', detail: '#a6a165' },
             pillar: { top: '#a673a6', side: '#d1cc8c', detail: '#a6a165' },
-            enemies: ['vex', 'shulker'],
-            points: { small: 'amethyst', large: 'eye' }
+            enemies: ['vex'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.3,
+            pillarGap: 195,
+            spawnDist: 200,
+            powerupChance: 0.45,
+            appleChanceMult: 1.5
+        },
+        {
+            name: "End Highlands", winScore: 40,
+            bg: 'end_highlands', cloudType: 'void',
+            ground: { top: '#5b2c6f', side: '#d1cc8c', detail: '#a6a165' },
+            pillar: { top: '#5b2c6f', side: '#d1cc8c', detail: '#a6a165' },
+            enemies: ['shulker'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.35,
+            pillarGap: 190,
+            spawnDist: 190,
+            powerupChance: 0.45,
+            appleChanceMult: 1.6
+        },
+        {
+            name: "Small End Islands", winScore: 45,
+            bg: 'end_islands', cloudType: 'void',
+            ground: { top: '#4a235a', side: '#d1cc8c', detail: '#a6a165' },
+            pillar: { top: '#4a235a', side: '#d1cc8c', detail: '#a6a165' },
+            enemies: ['shulker', 'wither_skull'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.4,
+            pillarGap: 185,
+            spawnDist: 180,
+            powerupChance: 0.50,
+            appleChanceMult: 1.7
+        },
+        {
+            name: "End City", winScore: 50,
+            bg: 'end_city', cloudType: 'void',
+            ground: { top: '#8e44ad', side: '#d1cc8c', detail: '#a6a165' },
+            pillar: { top: '#8e44ad', side: '#d1cc8c', detail: '#a6a165' },
+            enemies: ['shulker', 'vex'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.45,
+            pillarGap: 180,
+            spawnDist: 170,
+            powerupChance: 0.50,
+            appleChanceMult: 1.8
+        },
+        {
+            name: "Dragon's Lair", winScore: 60,
+            bg: 'dragon_lair', cloudType: 'void',
+            ground: { top: '#2c3e50', side: '#1a252f', detail: '#0f171e' },
+            pillar: { top: '#2c3e50', side: '#1a252f', detail: '#0f171e' },
+            enemies: ['shulker', 'vex', 'wither_skull'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.5,
+            pillarGap: 175,
+            spawnDist: 160,
+            powerupChance: 0.55,
+            appleChanceMult: 2.5
         }
     ];
     let activeLevel = 0;
 
-    function updateMenuLocks() {
-        if (unlockedLevel >= 1) {
-            btnLvl1.disabled = false; btnLvl1.classList.add('unlocked'); goalLvl1.innerText = "Goal: 30 Points";
-        }
-        if (unlockedLevel >= 2) {
-            btnLvl2.disabled = false; btnLvl2.classList.add('unlocked'); goalLvl2.innerText = "Goal: 40 Points";
+    let activeTab = 0;
+
+    function switchTab(tabIndex) {
+        activeTab = tabIndex;
+        const tabs = [document.getElementById('tab0'), document.getElementById('tab1'), document.getElementById('tab2')];
+        const colors = ['border-green-500 text-green-400', 'border-red-500 text-red-400', 'border-purple-500 text-purple-400'];
+        
+        tabs.forEach((tab, index) => {
+            if (index === tabIndex) {
+                tab.className = `tab-btn active border-b-4 ${colors[index]} text-[10px] py-2 px-1 flex-1 font-bold`;
+            } else {
+                tab.className = `tab-btn border-b-4 border-transparent text-gray-500 text-[10px] py-2 px-1 flex-1 font-bold`;
+            }
+        });
+        
+        renderLevels();
+    }
+
+    function renderLevels() {
+        const container = document.getElementById('levelListContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const startIndex = activeTab * 5;
+        const endIndex = startIndex + 5;
+        
+        for (let i = startIndex; i < endIndex; i++) {
+            const lvl = LEVELS[i];
+            const isUnlocked = i <= unlockedLevel;
+            
+            const btn = document.createElement('button');
+            btn.className = `level-btn ${isUnlocked ? 'unlocked' : ''}`;
+            btn.disabled = !isUnlocked;
+            btn.onclick = () => startGame(i);
+            
+            let titleClass = 'text-white';
+            if (activeTab === 0 && isUnlocked) titleClass = 'text-green-300';
+            else if (activeTab === 1 && isUnlocked) titleClass = 'text-red-300';
+            else if (activeTab === 2 && isUnlocked) titleClass = 'text-purple-300';
+            
+            const num = (i % 5) + 1;
+            const titleText = `${num}. ${lvl.name.toUpperCase()}`;
+            const goalText = isUnlocked ? `Goal: ${lvl.winScore} Points` : `Goal: ${lvl.winScore} Points (Locked)`;
+            
+            btn.innerHTML = `
+                <div class="level-title ${titleClass}">${titleText}</div>
+                <div class="level-goal">${goalText}</div>
+            `;
+            
+            container.appendChild(btn);
         }
     }
-    updateMenuLocks();
+
+    function updateMenuLocks() {
+        renderLevels();
+    }
+    switchTab(Math.floor(unlockedLevel / 5));
 
     function triggerShake(framesDur, intensity) { shakeFrames = framesDur; shakeIntensity = intensity; }
 
     function getGameSpeed() {
+        let levelMult = LEVELS[activeLevel].speedMult || 1.0;
         let difficultyMult = 1.0 + Math.min(1.5, score * 0.025);
-        let speed = difficultyMult;
+        let speed = levelMult * difficultyMult;
         if (creeper.slowMoTimer > 0) speed *= 0.45; 
         return speed;
     }
@@ -285,8 +521,36 @@
                 let cycle = Math.sin(gameFrames / 600); let lightness = 42.5 + cycle * 27.5; let hue = 215;
                 if (cycle < 0 && cycle > -0.5) hue = 260; else if (cycle <= -0.5) hue = 230;
                 return `hsl(${hue}, 100%, ${lightness}%)`;
-            } else if (lvlBg === 'nether') return '#3a0909';
-            else if (lvlBg === 'end') return '#110022';
+            } else if (lvlBg === 'desert') {
+                return '#e0b034';
+            } else if (lvlBg === 'cave') {
+                return '#2d3436';
+            } else if (lvlBg === 'jungle') {
+                return '#1e3d2f';
+            } else if (lvlBg === 'stronghold') {
+                return '#2f3640';
+            } else if (lvlBg === 'nether') {
+                return '#3a0909';
+            } else if (lvlBg === 'soulsand') {
+                return '#4a2c11';
+            } else if (lvlBg === 'crimson') {
+                return '#5a0606';
+            } else if (lvlBg === 'warped') {
+                return '#06504a';
+            } else if (lvlBg === 'basalt') {
+                return '#1e272c';
+            } else if (lvlBg === 'end') {
+                return '#110022';
+            } else if (lvlBg === 'end_highlands') {
+                return '#1a0033';
+            } else if (lvlBg === 'end_islands') {
+                return '#0b001a';
+            } else if (lvlBg === 'end_city') {
+                return '#26004d';
+            } else if (lvlBg === 'dragon_lair') {
+                return '#05000d';
+            }
+            return '#111';
         },
         draw() {
             ctx.fillStyle = this.getSkyColor(); ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
@@ -721,15 +985,18 @@
             if (currentState !== state.game) return;
             let speed = getGameSpeed();
             
+            let currentGap = LEVELS[activeLevel].pillarGap || 230;
+            let currentSpawnDist = LEVELS[activeLevel].spawnDist || 240;
+
             this.distanceCounter += this.dx * speed;
-            if (this.distanceCounter >= this.spawnDistance) {
+            if (this.distanceCounter >= currentSpawnDist) {
                 this.distanceCounter = 0;
-                let maxPos = ground.y - this.gap - 40; let minPos = 40;
+                let maxPos = ground.y - currentGap - 40; let minPos = 40;
                 let topPos = Math.floor(Math.random() * (maxPos - minPos + 1) + minPos);
                 let spawnX = LOGICAL_WIDTH;
-                this.items.push({ x: spawnX, top: topPos, bottom: topPos + this.gap, passed: false, destroyed: false });
+                this.items.push({ x: spawnX, top: topPos, bottom: topPos + currentGap, passed: false, destroyed: false });
 
-                let spawnPowerupChance = activeLevel === 2 ? 0.50 : 0.35;
+                let spawnPowerupChance = LEVELS[activeLevel].powerupChance || 0.35;
                 let spawnPowerup = Math.random() < spawnPowerupChance; 
                 let spawnEnemy = gameFrames > 150 && Math.random() < 0.40; 
 
@@ -740,11 +1007,15 @@
                     else if (pRoll < 0.26) pType = 'slime'; else if (pRoll < 0.36) pType = 'elytra';
                     else if (pRoll < 0.46) pType = 'blaze'; else if (pRoll < 0.54) pType = 'chorus';
                     else if (pRoll < 0.62) pType = 'pearl'; else if (pRoll < 0.70) pType = 'clock';
-                    else if (pRoll < (activeLevel === 2 ? 0.95 : 0.80)) pType = 'apple';
+                    else {
+                        let appleMult = LEVELS[activeLevel].appleChanceMult || 1.0;
+                        let appleThreshold = 0.70 + (0.10 * appleMult);
+                        if (pRoll < Math.min(0.98, appleThreshold)) pType = 'apple';
+                    }
 
-                    powerups.items.push({ x: spawnX + this.width/2 - powerups.size/2, y: topPos + this.gap/2 - powerups.size/2, type: pType, collected: false });
+                    powerups.items.push({ x: spawnX + this.width/2 - powerups.size/2, y: topPos + currentGap/2 - powerups.size/2, type: pType, collected: false });
                 }
-                if (spawnEnemy) enemies.spawn(spawnX + this.width + 30, topPos, topPos + this.gap);
+                if (spawnEnemy) enemies.spawn(spawnX + this.width + 30, topPos, topPos + currentGap);
             }
 
             this.items.forEach((p, i) => {
@@ -794,7 +1065,7 @@
         currentState = state.win;
         creeper.exploded = true; 
         
-        if (activeLevel === unlockedLevel && unlockedLevel < 2) {
+        if (activeLevel === unlockedLevel && unlockedLevel < 14) {
             unlockedLevel++;
             localStorage.setItem('flappyCreeperUnlocked2', unlockedLevel);
             updateMenuLocks();
@@ -811,6 +1082,7 @@
         endScreen.classList.add('hidden'); endScreen.classList.remove('flex');
         menuScreen.classList.remove('hidden');
         currentState = state.menu;
+        switchTab(Math.floor(unlockedLevel / 5));
     }
 
     function handleInput() {
