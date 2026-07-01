@@ -396,6 +396,7 @@
     function triggerShake(framesDur, intensity) { shakeFrames = framesDur; shakeIntensity = intensity; }
 
     function getGameSpeed() {
+        if (typeof creeper !== 'undefined' && creeper.isDying) return 0;
         let levelMult = LEVELS[activeLevel].speedMult || 1.0;
         let difficultyMult = 1.0 + Math.min(1.5, score * 0.025);
         let speed = levelMult * difficultyMult;
@@ -600,13 +601,18 @@
     // ----------------------------------------------------
     const creeper = {
         baseSize: 32, currentSize: 32, x: 80, y: 200, velocity: 0, gravityBase: 0.25, gravityActive: 0.25, jump: 5.5, rotation: 0, exploded: false,
-        invincibleTimer: 0, shrinkTimer: 0, phaseTimer: 0, slowMoTimer: 0, transformTimer: 0, transform: 'none',
+        invincibleTimer: 0, shrinkTimer: 0, phaseTimer: 0, slowMoTimer: 0, transformTimer: 0, transform: 'none', isDying: false, dyingTimer: 0,
 
         draw() {
             if (this.exploded) return;
-            let s = this.currentSize; let cx = -s/2; let cy = -s/2;
+            let s = this.currentSize; 
+            if (this.isDying) {
+                let swellFactor = 1.0 + (45 - this.dyingTimer) / 45 * 0.6;
+                s *= swellFactor;
+            }
+            let cx = -s/2; let cy = -s/2;
 
-            ctx.save(); ctx.translate(this.x + s/2, this.y + s/2); ctx.rotate(this.rotation);
+            ctx.save(); ctx.translate(this.x + this.currentSize/2, this.y + this.currentSize/2); ctx.rotate(this.rotation);
 
             if (this.phaseTimer > 0) {
                 let pulse = Math.abs(Math.sin(frames / 10)); ctx.globalAlpha = 0.4 + (pulse * 0.2); 
@@ -652,11 +658,32 @@
                     ctx.fillRect(rodX - 2, rodY - 6, 4, 12);
                 }
             }
+            if (this.isDying) {
+                let flashAlphaVal = Math.floor((45 - this.dyingTimer) / 4) % 2 === 0 ? 0.75 : 0.15;
+                ctx.fillStyle = `rgba(255, 255, 255, ${flashAlphaVal})`;
+                ctx.fillRect(cx - 2, cy - 2, s + 4, s + 4);
+            }
             ctx.restore();
         },
 
         update() {
             if (this.exploded) return;
+
+            if (this.isDying) {
+                this.dyingTimer--;
+                if (this.dyingTimer % 3 === 0) {
+                    effects.addExplosion(
+                        this.x + this.currentSize/2 + (Math.random() - 0.5) * 20,
+                        this.y + this.currentSize/2 + (Math.random() - 0.5) * 20,
+                        ['#ffffff', '#aaffaa', '#10c010'],
+                        1, 0.3, 0.05, true
+                    );
+                }
+                if (this.dyingTimer <= 0) {
+                    this.triggerExplosion();
+                }
+                return;
+            }
 
             if (this.invincibleTimer > 0) this.invincibleTimer--;
             if (this.phaseTimer > 0) this.phaseTimer--;
@@ -703,17 +730,32 @@
             }
         },
 
+        startDying() {
+            if (this.isDying || this.exploded || currentState === state.over || currentState === state.win) return;
+            this.isDying = true;
+            this.dyingTimer = 45;
+            triggerShake(15, 3);
+        },
+
+        triggerExplosion() {
+            this.isDying = false;
+            this.exploded = true;
+            triggerShake(40, 25); flashAlpha = 1.0;
+            effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize/2, ['#ffffff', '#ffaa00', '#ff0000', '#444444', '#10c010'], 120, 2.5);
+            
+            setTimeout(() => {
+                if (currentState === state.game || currentState === state.over) {
+                    currentState = state.over;
+                    hud.classList.add('hidden');
+                    endScreen.classList.remove('hidden'); endScreen.classList.add('flex');
+                    endTitle.innerText = "BOOM!"; endTitle.className = "text-4xl text-red-500 pixel-text-shadow mb-4 tracking-widest";
+                    finalScoreEl.innerText = score;
+                }
+            }, 800);
+        },
+
         triggerGameOver() {
-            if (currentState !== state.over && currentState !== state.win) {
-                currentState = state.over; this.exploded = true;
-                triggerShake(30, 20); flashAlpha = 1.0;
-                effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize/2, ['#ffffff', '#ffaa00', '#ff0000', '#444444', '#10c010'], 100, 2);
-                
-                hud.classList.add('hidden');
-                endScreen.classList.remove('hidden'); endScreen.classList.add('flex');
-                endTitle.innerText = "BOOM!"; endTitle.className = "text-4xl text-red-500 pixel-text-shadow mb-4 tracking-widest";
-                finalScoreEl.innerText = score;
-            }
+            this.startDying();
         },
 
         getHitbox() {
@@ -727,6 +769,7 @@
 
         reset() {
             this.x = 80; this.y = 200; this.velocity = 0; this.rotation = 0; this.exploded = false;
+            this.isDying = false; this.dyingTimer = 0;
             this.invincibleTimer = 0; this.shrinkTimer = 0; this.transformTimer = 0; this.phaseTimer = 0; this.slowMoTimer = 0;
             this.transform = 'none'; this.currentSize = this.baseSize; this.gravityActive = this.gravityBase;
             transformAlert.classList.add('hidden');
