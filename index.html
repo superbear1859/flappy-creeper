@@ -441,16 +441,20 @@
         addText(x, y, text, color) { this.floatingTexts.push({ x: x, y: y, text: text, color: color, life: 1.0, vy: -1.5 }); },
         update() {
             let speed = getGameSpeed();
+            let particleSpeed = speed;
+            if (typeof creeper !== 'undefined' && (creeper.isDying || creeper.exploded)) {
+                particleSpeed = 1.0;
+            }
             for (let i = this.particles.length - 1; i >= 0; i--) {
-                let p = this.particles[i]; p.x += p.vx * speed; p.y += p.vy * speed;
-                if (!p.ig) p.vy += 0.2 * Math.max(1, speed); p.life -= p.decay * speed;
+                let p = this.particles[i]; p.x += p.vx * particleSpeed; p.y += p.vy * particleSpeed;
+                if (!p.ig) p.vy += 0.2 * Math.max(1, particleSpeed); p.life -= p.decay * particleSpeed;
                 if (p.life <= 0) this.particles.splice(i, 1);
             }
             for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
-                let ft = this.floatingTexts[i]; ft.y += ft.vy * speed; ft.life -= 0.02 * speed;
+                let ft = this.floatingTexts[i]; ft.y += ft.vy * particleSpeed; ft.life -= 0.02 * particleSpeed;
                 if (ft.life <= 0) this.floatingTexts.splice(i, 1);
             }
-            if (flashAlpha > 0) flashAlpha -= 0.05 * speed;
+            if (flashAlpha > 0) flashAlpha -= 0.05 * particleSpeed;
         },
         draw() {
             this.particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
