@@ -1517,7 +1517,33 @@
         if (currentState === state.game) creeper.flap();
     }
 
-    window.addEventListener('keydown', (e) => { if ((e.code === 'Space' || e.code === 'ArrowUp') && currentState === state.game) { e.preventDefault(); handleInput(); } });
+    let cheatBuffer = "";
+    const CHEAT_CODE = "superbear1859yyyyy";
+
+    window.addEventListener('keydown', (e) => {
+        if ((e.code === 'Space' || e.code === 'ArrowUp') && currentState === state.game) {
+            e.preventDefault();
+            handleInput();
+            return;
+        }
+
+        if (currentState === state.menu && e.key && e.key.length === 1) {
+            cheatBuffer += e.key.toLowerCase();
+            if (cheatBuffer.length > CHEAT_CODE.length) {
+                cheatBuffer = cheatBuffer.substring(cheatBuffer.length - CHEAT_CODE.length);
+            }
+            if (cheatBuffer === CHEAT_CODE) {
+                cheatBuffer = "";
+                unlockedLevel = 14;
+                localStorage.setItem('flappyCreeperUnlocked2', 14);
+                switchTab(2);
+                triggerShake(25, 10);
+                flashAlpha = 1.0;
+                effects.addExplosion(LOGICAL_WIDTH/2, LOGICAL_HEIGHT/2, ['#FFD700', '#ffffff', '#55ff55'], 40, 1.0, 0.03, true);
+                effects.addText(LOGICAL_WIDTH/2, LOGICAL_HEIGHT/2 - 50, "CHEAT ACTIVATED!", "#FFD700");
+            }
+        }
+    });
     const container = document.getElementById('game-container');
     container.addEventListener('mousedown', (e) => { if (!e.target.closest('.pointer-events-auto') && currentState === state.game) handleInput(); });
     container.addEventListener('touchstart', (e) => { if (!e.target.closest('.pointer-events-auto') && currentState === state.game) { e.preventDefault(); handleInput(); } }, { passive: false });
@@ -1551,7 +1577,7 @@
             ground.update(); creeper.update(); effects.update();
         } else {
             gameFrames++;
-            bg.update(); ground.update(); creeper.update(); 
+            bg.update(); ground.update(); creeper.update(); effects.update();
         }
         if (shakeFrames > 0) shakeFrames--;
         frames++; // Real time frames keep ticking (for UI & Player animations)
