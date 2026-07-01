@@ -729,7 +729,8 @@
                 let spawnX = LOGICAL_WIDTH;
                 this.items.push({ x: spawnX, top: topPos, bottom: topPos + this.gap, passed: false, destroyed: false });
 
-                let spawnPowerup = Math.random() < 0.35; 
+                let spawnPowerupChance = activeLevel === 2 ? 0.50 : 0.35;
+                let spawnPowerup = Math.random() < spawnPowerupChance; 
                 let spawnEnemy = gameFrames > 150 && Math.random() < 0.40; 
 
                 if (spawnPowerup) {
@@ -739,7 +740,7 @@
                     else if (pRoll < 0.26) pType = 'slime'; else if (pRoll < 0.36) pType = 'elytra';
                     else if (pRoll < 0.46) pType = 'blaze'; else if (pRoll < 0.54) pType = 'chorus';
                     else if (pRoll < 0.62) pType = 'pearl'; else if (pRoll < 0.70) pType = 'clock';
-                    else if (pRoll < 0.80) pType = 'apple';
+                    else if (pRoll < (activeLevel === 2 ? 0.95 : 0.80)) pType = 'apple';
 
                     powerups.items.push({ x: spawnX + this.width/2 - powerups.size/2, y: topPos + this.gap/2 - powerups.size/2, type: pType, collected: false });
                 }
