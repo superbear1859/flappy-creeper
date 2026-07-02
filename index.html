@@ -353,6 +353,45 @@
             spawnDist: 160,
             powerupChance: 0.55,
             appleChanceMult: 2.5
+        },
+        {
+            name: "Mushroom Fields", winScore: 40,
+            bg: 'mushroom_fields', cloudType: 'fluffy',
+            ground: { top: '#4a3b32', side: '#2f241d', detail: '#c62828' },
+            pillar: { top: '#c62828', side: '#e0e0e0', detail: '#b0bec5' },
+            enemies: ['creeper', 'slime'],
+            points: { small: 'redstone', large: 'emerald' },
+            speedMult: 1.3,
+            pillarGap: 180,
+            spawnDist: 180,
+            powerupChance: 0.50,
+            appleChanceMult: 2.0
+        },
+        {
+            name: "Basalt Deltas", winScore: 45,
+            bg: 'basalt_deltas', cloudType: 'ash',
+            ground: { top: '#263238', side: '#1a237e', detail: '#ff5722' },
+            pillar: { top: '#212121', side: '#37474f', detail: '#ff3d00' },
+            enemies: ['ghast', 'magma_cube'],
+            points: { small: 'quartz', large: 'netherite' },
+            speedMult: 1.4,
+            pillarGap: 170,
+            spawnDist: 170,
+            powerupChance: 0.45,
+            appleChanceMult: 2.2
+        },
+        {
+            name: "Void Islands", winScore: 50,
+            bg: 'void_islands', cloudType: 'void',
+            ground: { top: '#d4e157', side: '#9e9d24', detail: '#4a148c' },
+            pillar: { top: '#d4e157', side: '#afb42b', detail: '#311b92' },
+            enemies: ['shulker', 'vex'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.5,
+            pillarGap: 165,
+            spawnDist: 155,
+            powerupChance: 0.55,
+            appleChanceMult: 3.0
         }
     ];
     let activeLevel = 0;
@@ -388,6 +427,7 @@
     window.confirmResetProgress = function() {
         unlockedLevel = 0;
         localStorage.setItem('flappyCreeperUnlocked2', 0);
+        localStorage.removeItem('enderDragonBeaten');
         updateMenuLocks();
         switchTab(0);
         cancelResetProgress();
@@ -403,12 +443,26 @@
         if (!container) return;
         container.innerHTML = '';
         
+        const levelIndices = [];
         const startIndex = activeTab * 5;
-        const endIndex = startIndex + 5;
+        for (let i = startIndex; i < startIndex + 5; i++) {
+            levelIndices.push(i);
+        }
+
+        if (activeTab === 0 && unlockedLevel >= 5) {
+            levelIndices.push(15);
+        }
+        if (activeTab === 1 && unlockedLevel >= 10) {
+            levelIndices.push(16);
+        }
+        if (activeTab === 2 && localStorage.getItem('enderDragonBeaten') === 'true') {
+            levelIndices.push(17);
+        }
         
-        for (let i = startIndex; i < endIndex; i++) {
+        for (let idx = 0; idx < levelIndices.length; idx++) {
+            const i = levelIndices[idx];
             const lvl = LEVELS[i];
-            const isUnlocked = i <= unlockedLevel;
+            const isUnlocked = i >= 15 ? true : (i <= unlockedLevel);
             
             const btn = document.createElement('button');
             btn.className = `level-btn ${isUnlocked ? 'unlocked' : ''}`;
@@ -423,9 +477,12 @@
             if (i === 14 && isUnlocked) {
                 btn.className = `level-btn unlocked border-pink-500 shadow-[0_0_15px_rgba(255,0,255,0.4)]`;
                 titleClass = 'text-pink-400 font-bold';
+            } else if (i >= 15 && isUnlocked) {
+                btn.className = `level-btn unlocked border-yellow-500 shadow-[0_0_12px_rgba(255,215,0,0.3)]`;
+                titleClass = 'text-yellow-400 font-bold';
             }
             
-            const num = (i % 5) + 1;
+            const num = i >= 15 ? "BONUS" : ((i % 5) + 1);
             let titleText = `${num}. ${lvl.name.toUpperCase()}`;
             if (i === 14) titleText += " [BOSS FIGHT]";
             
@@ -632,6 +689,12 @@
                 return '#26004d';
             } else if (lvlBg === 'dragon_lair') {
                 return '#05000d';
+            } else if (lvlBg === 'mushroom_fields') {
+                return '#4a154b';
+            } else if (lvlBg === 'basalt_deltas') {
+                return '#1e2029';
+            } else if (lvlBg === 'void_islands') {
+                return '#04000a';
             }
             return '#111';
         },
@@ -703,9 +766,55 @@
 
             // Anims use real "frames" so the player feels fast during slowmo
             if (this.transform === 'elytra') {
-                ctx.fillStyle = '#555566'; let spread = this.velocity < 0 ? -Math.PI/6 : Math.PI/12;
-                ctx.save(); ctx.translate(cx, cy + 4); ctx.rotate(spread); ctx.fillRect(-s*0.8, 0, s*0.8, s*1.2); ctx.fillStyle = '#777788'; ctx.fillRect(-s*0.8+2, 2, s*0.8-4, s*1.2-4); ctx.restore();
-                ctx.save(); ctx.translate(cx + s, cy + 4); ctx.rotate(-spread); ctx.fillStyle = '#555566'; ctx.fillRect(0, 0, s*0.8, s*1.2); ctx.fillStyle = '#777788'; ctx.fillRect(2, 2, s*0.8-4, s*1.2-4); ctx.restore();
+                // Left Elytra Wing
+                ctx.save();
+                ctx.translate(cx + s/2, cy + 4);
+                let leftAngle = (this.velocity > 0 ? Math.PI/4 : Math.PI/6) + Math.sin(frames*0.1) * 0.05;
+                ctx.rotate(leftAngle);
+                
+                ctx.fillStyle = '#4a4a5a';
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-s * 0.4, s * 1.5);
+                ctx.lineTo(-s * 0.9, s * 1.4);
+                ctx.lineTo(-s * 0.8, s * 0.4);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#65657a';
+                ctx.beginPath();
+                ctx.moveTo(-2, 2);
+                ctx.lineTo(-s * 0.38, s * 1.45);
+                ctx.lineTo(-s * 0.85, s * 1.35);
+                ctx.lineTo(-s * 0.76, s * 0.42);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                // Right Elytra Wing
+                ctx.save();
+                ctx.translate(cx + s/2, cy + 4);
+                let rightAngle = -(this.velocity > 0 ? Math.PI/4 : Math.PI/6) - Math.sin(frames*0.1) * 0.05;
+                ctx.rotate(rightAngle);
+                
+                ctx.fillStyle = '#4a4a5a';
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(s * 0.4, s * 1.5);
+                ctx.lineTo(s * 0.9, s * 1.4);
+                ctx.lineTo(s * 0.8, s * 0.4);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#65657a';
+                ctx.beginPath();
+                ctx.moveTo(2, 2);
+                ctx.lineTo(s * 0.38, s * 1.45);
+                ctx.lineTo(s * 0.85, s * 1.35);
+                ctx.lineTo(s * 0.76, s * 0.42);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
             } else {
                 ctx.fillStyle = '#ffffff'; let flapAngle = this.velocity < 0 ? -Math.PI/3 : Math.PI/6;
                 if (this.velocity < 0) flapAngle += Math.sin(frames) * 0.2;
@@ -718,7 +827,13 @@
             
             if (isGolden) { ctx.fillStyle = '#FFD700'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#FFA500'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4); } 
             else if (this.transform === 'slime') { ctx.fillStyle = '#55ff55'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#aaffaa'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4); } 
-            else if (this.transform === 'elytra') { ctx.fillStyle = '#9999aa'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#777788'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4); } 
+            else if (this.transform === 'elytra') {
+                ctx.fillStyle = '#10c010'; ctx.fillRect(cx, cy, s, s); 
+                ctx.fillStyle = '#14d814'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4);
+                ctx.fillStyle = '#0b8e0b'; ctx.fillRect(cx+s*0.75, cy, s/4, s/4); ctx.fillRect(cx+s/4, cy+s*0.75, s/4, s/4);
+                // Draw grey harness straps
+                ctx.fillStyle = '#4a4a5a'; ctx.fillRect(cx, cy + s*0.3, s, s*0.12); ctx.fillRect(cx + s*0.3, cy, s*0.12, s);
+            }
             else if (this.transform === 'blaze') { ctx.fillStyle = '#ff8800'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#ffff00'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4); } 
             else {
                 ctx.fillStyle = '#10c010'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#14d814'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4);
@@ -1553,6 +1668,9 @@
         if (activeLevel === unlockedLevel && unlockedLevel < 14) {
             unlockedLevel++;
             localStorage.setItem('flappyCreeperUnlocked2', unlockedLevel);
+            updateMenuLocks();
+        } else if (activeLevel === 14) {
+            localStorage.setItem('enderDragonBeaten', 'true');
             updateMenuLocks();
         }
 
