@@ -43,8 +43,12 @@
             background: #555;
             border: 2px solid #222;
         }
-        #levelListContainer::-webkit-scrollbar-thumb:hover {
-            background: #777;
+        .reset-btn {
+            background: rgba(180, 20, 20, 0.85); border: 4px solid #aa2222; padding: 8px 16px; margin-top: 12px;
+            color: white; font-family: 'Press Start 2P', cursive; font-size: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .reset-btn:hover {
+            transform: scale(1.05); background: rgba(220, 30, 30, 0.95); border-color: #ff3333;
         }
     </style>
 </head>
@@ -75,6 +79,24 @@
             <div class="mt-8 text-white text-[10px] md:text-xs pixel-text-shadow max-w-sm bg-black/50 p-4 rounded border border-gray-600">
                 <p class="mb-2 text-yellow-400">HOW TO PLAY:</p>
                 Tap or Space to fly. Dodge pillars and enemies. Collect shiny items for points and epic power-ups!
+            </div>
+            
+            <button id="resetProgressBtn" class="reset-btn pointer-events-auto" onclick="showResetProgressPrompt()">RESET PROGRESS</button>
+        </div>
+
+        <!-- Reset Progress Confirmation Prompt -->
+        <div id="resetPromptScreen" class="absolute inset-0 bg-black/95 hidden flex-col items-center justify-center text-center p-6 z-30 pointer-events-auto">
+            <div class="bg-gray-900 border-4 border-red-600 p-6 rounded max-w-sm flex flex-col items-center gap-6 shadow-2xl">
+                <div class="text-red-500 text-sm md:text-md pixel-text-shadow leading-relaxed mb-2">
+                    ARE YOU SURE YOU WANT TO<br>RESTART ALL YOUR PROGRESS?
+                </div>
+                <div class="text-gray-400 text-[8px] leading-normal mb-4 font-mono">
+                    This will lock every level except Plains Level 1.
+                </div>
+                <div class="flex gap-4 w-full">
+                    <button class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold border-2 border-red-800 text-[10px] cursor-pointer transition-transform hover:scale-105 active:scale-95" onclick="confirmResetProgress()">YES</button>
+                    <button class="flex-1 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold border-2 border-gray-800 text-[10px] cursor-pointer transition-transform hover:scale-105 active:scale-95" onclick="cancelResetProgress()">NO</button>
+                </div>
             </div>
         </div>
 
@@ -352,6 +374,29 @@
         
         renderLevels();
     }
+
+    window.showResetProgressPrompt = function() {
+        document.getElementById('resetPromptScreen').classList.remove('hidden');
+        document.getElementById('resetPromptScreen').classList.add('flex');
+    };
+
+    window.cancelResetProgress = function() {
+        document.getElementById('resetPromptScreen').classList.remove('flex');
+        document.getElementById('resetPromptScreen').classList.add('hidden');
+    };
+
+    window.confirmResetProgress = function() {
+        unlockedLevel = 0;
+        localStorage.setItem('flappyCreeperUnlocked2', 0);
+        updateMenuLocks();
+        switchTab(0);
+        cancelResetProgress();
+
+        triggerShake(15, 6);
+        flashAlpha = 0.8;
+        effects.addExplosion(LOGICAL_WIDTH/2, LOGICAL_HEIGHT/2, ['#ff3333', '#aa2222', '#ffffff'], 30, 0.8, 0.05, true);
+        effects.addText(LOGICAL_WIDTH/2, LOGICAL_HEIGHT/2 - 50, "PROGRESS WIPED!", "#ff3333");
+    };
 
     function renderLevels() {
         const container = document.getElementById('levelListContainer');
