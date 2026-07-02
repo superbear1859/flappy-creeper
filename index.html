@@ -375,9 +375,21 @@
             else if (activeTab === 1 && isUnlocked) titleClass = 'text-red-300';
             else if (activeTab === 2 && isUnlocked) titleClass = 'text-purple-300';
             
+            if (i === 14 && isUnlocked) {
+                btn.className = `level-btn unlocked border-pink-500 shadow-[0_0_15px_rgba(255,0,255,0.4)]`;
+                titleClass = 'text-pink-400 font-bold';
+            }
+            
             const num = (i % 5) + 1;
-            const titleText = `${num}. ${lvl.name.toUpperCase()}`;
-            const goalText = isUnlocked ? `Goal: ${lvl.winScore} Points` : `Goal: ${lvl.winScore} Points (Locked)`;
+            let titleText = `${num}. ${lvl.name.toUpperCase()}`;
+            if (i === 14) titleText += " [BOSS FIGHT]";
+            
+            let goalText = "";
+            if (i === 14) {
+                goalText = isUnlocked ? "Goal: Defeat Ender Dragon" : "Goal: Defeat Ender Dragon (Locked)";
+            } else {
+                goalText = isUnlocked ? `Goal: ${lvl.winScore} Points` : `Goal: ${lvl.winScore} Points (Locked)`;
+            }
             
             btn.innerHTML = `
                 <div class="level-title ${titleClass}">${titleText}</div>
@@ -837,7 +849,7 @@
     // ----------------------------------------------------
     const enderDragon = {
         x: LOGICAL_WIDTH - 100, y: 150, w: 90, h: 60,
-        health: 100, maxHealth: 100,
+        health: 60, maxHealth: 60,
         targetY: 150,
         state: 'hover', // 'hover', 'swoop', 'dead'
         swoopTimer: 0,
@@ -849,8 +861,8 @@
         reset() {
             this.x = LOGICAL_WIDTH + 150; // spawn off-screen initially
             this.y = 150;
-            this.health = 100;
-            this.maxHealth = 100;
+            this.health = 60;
+            this.maxHealth = 60;
             this.targetY = 150;
             this.state = 'hover';
             this.swoopTimer = 0;
@@ -889,15 +901,15 @@
                 this.y = Math.max(20, Math.min(LOGICAL_HEIGHT - ground.h - this.h - 20, this.y));
 
                 this.shootTimer += speed;
-                if (this.shootTimer >= 100) {
+                if (this.shootTimer >= 145) {
                     this.shootTimer = 0;
                     this.shootFireball();
                 }
 
                 this.swoopTimer += speed;
-                if (this.swoopTimer >= 220) {
+                if (this.swoopTimer >= 280) {
                     this.swoopTimer = 0;
-                    if (Math.random() < 0.35 && this.x <= LOGICAL_WIDTH - 110) {
+                    if (Math.random() < 0.20 && this.x <= LOGICAL_WIDTH - 110) {
                         this.state = 'swoop';
                         this.swoopTimer = 0;
                     }
@@ -1045,8 +1057,8 @@
         spawn(x, y, angle) {
             this.items.push({
                 x: x, y: y, w: 16, h: 16,
-                vx: Math.cos(angle) * 3.5,
-                vy: Math.sin(angle) * 3.5,
+                vx: Math.cos(angle) * 2.4,
+                vy: Math.sin(angle) * 2.4,
                 rot: 0
             });
         },
