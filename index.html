@@ -1501,6 +1501,14 @@
                     if (hb.right > e.x && hb.left < e.x + e.w && hb.bottom > e.y && hb.top < e.y + e.h) {
                         if (creeper.phaseTimer > 0) {
                             // Phase
+                        } else if (creeper.transform === 'slime' && creeper.velocity > 0 && (hb.bottom - creeper.velocity * 1.2 <= e.y + e.h * 0.5)) {
+                            e.destroyed = true; addScore(5);
+                            creeper.y = e.y - creeper.currentSize;
+                            creeper.velocity = -creeper.jump * 1.4;
+                            triggerShake(8, 4);
+                            playSlimeSquishSound();
+                            effects.addExplosion(e.x + e.w/2, e.y + e.h/2, ['#55ff55', '#aaffaa', '#22aa22'], 20, 1.0);
+                            effects.addText(e.x + e.w/2, e.y, "SQUISH!", "#55ff55");
                         } else if (creeper.invincibleTimer > 0) {
                             e.destroyed = true; addScore(3); triggerShake(5, 5);
                             let colors = e.type === 'bat' ? ['#3a2b22', '#221814'] : e.type === 'fireball' ? ['#ff8800', '#ff0000'] : e.type === 'phantom' ? ['#171738', '#44ff44'] : e.type === 'vex' ? ['#aaccff', '#ff0000'] : e.type === 'shulker' ? ['#eebdff', '#ffffff'] : ['#333333', '#111111'];
@@ -1865,6 +1873,22 @@
         osc.stop(now + 0.3);
         crackNode.start(now);
         rumbleNode.start(now);
+    }
+
+    function playSlimeSquishSound() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
     }
 
     function playPowerupSound() {
