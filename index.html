@@ -1814,48 +1814,57 @@
         
         let osc = audioCtx.createOscillator();
         let oscGain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(170, now);
-        osc.frequency.linearRampToValueAtTime(30, now + 0.65);
-        
-        let lowpass = audioCtx.createBiquadFilter();
-        lowpass.type = 'lowpass';
-        lowpass.frequency.setValueAtTime(250, now);
-        lowpass.Q.setValueAtTime(0.4, now);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.linearRampToValueAtTime(30, now + 0.08);
         
         oscGain.gain.setValueAtTime(0.9, now);
-        oscGain.gain.linearRampToValueAtTime(0.001, now + 0.65);
+        oscGain.gain.linearRampToValueAtTime(0.001, now + 0.25);
         
-        osc.connect(lowpass);
-        lowpass.connect(oscGain);
+        osc.connect(oscGain);
         oscGain.connect(audioCtx.destination);
         
-        let bufferSize = audioCtx.sampleRate * 0.55;
+        let bufferSize = audioCtx.sampleRate * 0.8;
         let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         let data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
             data[i] = Math.random() * 2 - 1;
         }
         
-        let noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
+        let crackNode = audioCtx.createBufferSource();
+        crackNode.buffer = buffer;
         
-        let filter = audioCtx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(600, now);
-        filter.frequency.linearRampToValueAtTime(180, now + 0.55);
+        let crackFilter = audioCtx.createBiquadFilter();
+        crackFilter.type = 'lowpass';
+        crackFilter.frequency.setValueAtTime(1800, now);
         
-        let noiseGain = audioCtx.createGain();
-        noiseGain.gain.setValueAtTime(0.9, now);
-        noiseGain.gain.linearRampToValueAtTime(0.001, now + 0.55);
+        let crackGain = audioCtx.createGain();
+        crackGain.gain.setValueAtTime(1.0, now);
+        crackGain.gain.linearRampToValueAtTime(0.001, now + 0.18);
         
-        noise.connect(filter);
-        filter.connect(noiseGain);
-        noiseGain.connect(audioCtx.destination);
+        crackNode.connect(crackFilter);
+        crackFilter.connect(crackGain);
+        crackGain.connect(audioCtx.destination);
+        
+        let rumbleNode = audioCtx.createBufferSource();
+        rumbleNode.buffer = buffer;
+        
+        let rumbleFilter = audioCtx.createBiquadFilter();
+        rumbleFilter.type = 'lowpass';
+        rumbleFilter.frequency.setValueAtTime(350, now);
+        
+        let rumbleGain = audioCtx.createGain();
+        rumbleGain.gain.setValueAtTime(0.7, now);
+        rumbleGain.gain.linearRampToValueAtTime(0.001, now + 0.65);
+        
+        rumbleNode.connect(rumbleFilter);
+        rumbleFilter.connect(rumbleGain);
+        rumbleGain.connect(audioCtx.destination);
         
         osc.start(now);
-        osc.stop(now + 0.75);
-        noise.start(now);
+        osc.stop(now + 0.3);
+        crackNode.start(now);
+        rumbleNode.start(now);
     }
 
     function playPowerupSound() {
