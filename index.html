@@ -1818,7 +1818,7 @@
         osc.frequency.setValueAtTime(100, now);
         osc.frequency.linearRampToValueAtTime(30, now + 0.08);
         
-        oscGain.gain.setValueAtTime(0.9, now);
+        oscGain.gain.setValueAtTime(1.5, now);
         oscGain.gain.linearRampToValueAtTime(0.001, now + 0.25);
         
         osc.connect(oscGain);
@@ -1839,7 +1839,7 @@
         crackFilter.frequency.setValueAtTime(1800, now);
         
         let crackGain = audioCtx.createGain();
-        crackGain.gain.setValueAtTime(1.0, now);
+        crackGain.gain.setValueAtTime(1.8, now);
         crackGain.gain.linearRampToValueAtTime(0.001, now + 0.18);
         
         crackNode.connect(crackFilter);
@@ -1854,7 +1854,7 @@
         rumbleFilter.frequency.setValueAtTime(350, now);
         
         let rumbleGain = audioCtx.createGain();
-        rumbleGain.gain.setValueAtTime(0.7, now);
+        rumbleGain.gain.setValueAtTime(1.2, now);
         rumbleGain.gain.linearRampToValueAtTime(0.001, now + 0.65);
         
         rumbleNode.connect(rumbleFilter);
