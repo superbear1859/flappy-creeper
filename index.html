@@ -527,6 +527,8 @@
         // Win Condition Check
         if (score >= LEVELS[activeLevel].winScore && currentState === state.game) {
             triggerWin();
+        } else {
+            playScoreSound();
         }
     }
 
@@ -935,6 +937,7 @@
         flap() {
             this.velocity = -this.jump * (this.transform === 'elytra' ? 0.85 : 1);
             if (currentState === state.game) {
+                playFlapSound();
                 effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize, ['#ffffff', '#cccccc'], 3, 0.2, 0.05, false);
                 if (this.transform === 'blaze') playerProjectiles.spawn(this.x + this.currentSize, this.y + this.currentSize/2 - 6);
             }
@@ -945,6 +948,7 @@
             this.isDying = true;
             this.dyingTimer = 45;
             triggerShake(15, 3);
+            playHitSound();
         },
 
         triggerExplosion() {
@@ -952,6 +956,7 @@
             this.exploded = true;
             triggerShake(40, 25); flashAlpha = 1.0;
             effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize/2, ['#ffffff', '#ffaa00', '#ff0000', '#444444', '#10c010'], 120, 2.5);
+            playExplosionSound();
             
             // Blow up all visible pillars on screen
             pillars.items.forEach(p => {
@@ -1047,11 +1052,15 @@
             if (this.health <= 0) {
                 this.state = 'dead';
                 this.deathTimer++;
+                if (this.deathTimer === 1) {
+                    playExplosionSound();
+                }
                 if (this.deathTimer % 4 === 0) {
                     let rx = this.x + Math.random() * this.w;
                     let ry = this.y + Math.random() * this.h;
                     effects.addExplosion(rx, ry, ['#ffffff', '#aa00ff', '#440066', '#ff00ff'], 12, 0.8, 0.05, true);
                     triggerShake(5, 5);
+                    playHitSound();
                 }
                 if (this.deathTimer >= 90) {
                     triggerWin();
@@ -1136,6 +1145,7 @@
             effects.addExplosion(this.x + this.w/2, this.y + this.h/2, ['#ffffff', '#ff00ff', '#5500aa'], 15, 0.8, 0.06, true);
             effects.addText(this.x + this.w/2, this.y, `-${amount}`, "#ff00ff");
             triggerShake(6, 4);
+            playHitSound();
         },
 
         draw() {
@@ -1367,22 +1377,25 @@
                 addScore(5); effects.addExplosion(cx, cy, ['#4ae8e8', '#ffffff'], 15, 0.5); effects.addText(cx, cy, "+5", "#4ae8e8");
             } else if (['emerald','gold','eye'].includes(p.type)) {
                 addScore(10); effects.addExplosion(cx, cy, ['#4de04d', '#ffffff'], 20, 0.6); effects.addText(cx, cy, "+10", "#4de04d");
-            } else if (p.type === 'apple') {
-                creeper.invincibleTimer = 360; effects.addExplosion(cx, cy, ['#FFD700', '#FFA500', '#FFFFFF'], 20, 0.5); effects.addText(cx, cy, "INVINCIBLE", "#FFD700");
-            } else if (p.type === 'chorus') {
-                creeper.shrinkTimer = 480; effects.addExplosion(cx, cy, ['#a040a0', '#ffffff'], 20, 0.5); effects.addText(cx, cy, "SHRINK", "#a040a0");
-            } else if (p.type === 'tnt') {
-                this.triggerTNT(cx, cy);
-            } else if (p.type === 'slime') {
-                creeper.setTransform('slime', 'SLIME BOUNCE!', 'text-green-400'); effects.addExplosion(cx, cy, ['#55ff55', '#aaffaa'], 25, 0.8);
-            } else if (p.type === 'elytra') {
-                creeper.setTransform('elytra', 'ELYTRA GLIDE!', 'text-gray-300'); effects.addExplosion(cx, cy, ['#777788', '#ffffff'], 25, 0.8);
-            } else if (p.type === 'blaze') {
-                creeper.setTransform('blaze', 'BLAZE FIRE!', 'text-orange-400'); effects.addExplosion(cx, cy, ['#ffaa00', '#ff0000'], 30, 1.0);
-            } else if (p.type === 'pearl') {
-                creeper.phaseTimer = 360; effects.addExplosion(cx, cy, ['#33aaaa', '#cc00ff'], 25, 0.8); effects.addText(cx, cy, "PHASE", "#66ffff");
-            } else if (p.type === 'clock') {
-                creeper.slowMoTimer = 480; effects.addExplosion(cx, cy, ['#ffd700', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SLOW MO", "#ffd700");
+            } else {
+                playPowerupSound();
+                if (p.type === 'apple') {
+                    creeper.invincibleTimer = 360; effects.addExplosion(cx, cy, ['#FFD700', '#FFA500', '#FFFFFF'], 20, 0.5); effects.addText(cx, cy, "INVINCIBLE", "#FFD700");
+                } else if (p.type === 'chorus') {
+                    creeper.shrinkTimer = 480; effects.addExplosion(cx, cy, ['#a040a0', '#ffffff'], 20, 0.5); effects.addText(cx, cy, "SHRINK", "#a040a0");
+                } else if (p.type === 'tnt') {
+                    this.triggerTNT(cx, cy);
+                } else if (p.type === 'slime') {
+                    creeper.setTransform('slime', 'SLIME BOUNCE!', 'text-green-400'); effects.addExplosion(cx, cy, ['#55ff55', '#aaffaa'], 25, 0.8);
+                } else if (p.type === 'elytra') {
+                    creeper.setTransform('elytra', 'ELYTRA GLIDE!', 'text-gray-300'); effects.addExplosion(cx, cy, ['#777788', '#ffffff'], 25, 0.8);
+                } else if (p.type === 'blaze') {
+                    creeper.setTransform('blaze', 'BLAZE FIRE!', 'text-orange-400'); effects.addExplosion(cx, cy, ['#ffaa00', '#ff0000'], 30, 1.0);
+                } else if (p.type === 'pearl') {
+                    creeper.phaseTimer = 360; effects.addExplosion(cx, cy, ['#33aaaa', '#cc00ff'], 25, 0.8); effects.addText(cx, cy, "PHASE", "#66ffff");
+                } else if (p.type === 'clock') {
+                    creeper.slowMoTimer = 480; effects.addExplosion(cx, cy, ['#ffd700', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SLOW MO", "#ffd700");
+                }
             }
         },
 
@@ -1663,6 +1676,175 @@
     };
 
     // ----------------------------------------------------
+    // WEB AUDIO API SYNTHESIZER (SOUNDS & SOUNDTRACK)
+    // ----------------------------------------------------
+    let audioCtx = null;
+    let musicBeatTimer = 0;
+    let musicNoteIndex = 0;
+    const MUSIC_NOTES = [110.00, 123.47, 130.81, 146.83]; // A2, B2, C3, D3
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playFlapSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(260, audioCtx.currentTime + 0.08);
+        
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    function playScoreSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
+        
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+    }
+
+    function playHitSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(60, audioCtx.currentTime + 0.15);
+        
+        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+    }
+
+    function playExplosionSound() {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        let filter = audioCtx.createBiquadFilter();
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(10, audioCtx.currentTime + 0.4);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(300, audioCtx.currentTime);
+        filter.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.4);
+        
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+    }
+
+    function playPowerupSound() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime;
+        let notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+        notes.forEach((freq, index) => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + index * 0.05);
+            gain.gain.setValueAtTime(0.12, now + index * 0.05);
+            gain.gain.linearRampToValueAtTime(0.01, now + index * 0.05 + 0.15);
+            osc.start(now + index * 0.05);
+            osc.stop(now + index * 0.05 + 0.15);
+        });
+    }
+
+    function playWinSound() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime;
+        let notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, index) => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + index * 0.07);
+            gain.gain.setValueAtTime(0.15, now + index * 0.07);
+            gain.gain.linearRampToValueAtTime(0.01, now + index * 0.07 + 0.2);
+            osc.start(now + index * 0.07);
+            osc.stop(now + index * 0.07 + 0.2);
+        });
+    }
+
+    function playMusicNote(freq) {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.18);
+    }
+
+    function updateSoundtrack() {
+        if (currentState !== state.game) return;
+        
+        let progression = 0;
+        if (activeLevel === 14 && typeof enderDragon !== 'undefined') {
+            progression = 1.0 - (enderDragon.health / enderDragon.maxHealth);
+        } else {
+            let winScore = LEVELS[activeLevel].winScore;
+            progression = Math.min(1.0, score / winScore);
+        }
+        
+        let beatInterval = Math.max(16, 45 - (progression * 29));
+        
+        musicBeatTimer += getGameSpeed();
+        if (musicBeatTimer >= beatInterval) {
+            musicBeatTimer = 0;
+            playMusicNote(MUSIC_NOTES[musicNoteIndex]);
+            musicNoteIndex = (musicNoteIndex + 1) % MUSIC_NOTES.length;
+        }
+    }
+
+    // ----------------------------------------------------
     // GAME LOOP & UI
     // ----------------------------------------------------
     function startGame(levelIndex) {
@@ -1678,6 +1860,11 @@
         }
 
         if (!isLevelPlayable) return;
+
+        initAudio();
+        musicBeatTimer = 0;
+        musicNoteIndex = 0;
+
         activeLevel = levelIndex;
         
         // Reset Everything
@@ -1706,6 +1893,7 @@
     function triggerWin() {
         currentState = state.win;
         creeper.exploded = true; 
+        playWinSound(); 
         
         if (activeLevel === unlockedLevel && unlockedLevel < 14) {
             unlockedLevel++;
@@ -1793,6 +1981,7 @@
             }
 
             ground.update(); creeper.update(); effects.update();
+            updateSoundtrack();
         } else {
             gameFrames++;
             bg.update(); ground.update(); creeper.update(); effects.update();
