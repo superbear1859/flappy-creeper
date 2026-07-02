@@ -1681,7 +1681,10 @@
     let audioCtx = null;
     let musicBeatTimer = 0;
     let musicNoteIndex = 0;
-    const MUSIC_NOTES = [220.00, 246.94, 261.63, 293.66]; // A3, B3, C4, D4
+    
+    const OVERWORLD_MUSIC = [293.66, 392.00, 440.00, 493.88, 440.00, 392.00, 293.66, 329.63, 392.00, 440.00, 392.00, 329.63];
+    const NETHER_MUSIC = [130.81, 138.59, 146.83, 138.59, 110.00, 116.54, 123.47, 116.54];
+    const END_MUSIC = [220.00, 246.94, 261.63, 293.66];
 
     function initAudio() {
         if (!audioCtx) {
@@ -1890,7 +1893,7 @@
         });
     }
 
-    function playMusicNote(freq) {
+    function playMusicNote(freq, type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
@@ -1900,14 +1903,25 @@
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         
-        osc.type = 'square';
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         
-        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+        if (type === 'overworld') {
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.24, audioCtx.currentTime + 0.04);
+            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+        } else if (type === 'nether') {
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+        } else {
+            osc.type = 'square';
+            gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+        }
         
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.12);
+        osc.stop(audioCtx.currentTime + 0.45);
     }
 
     function updateSoundtrack() {
@@ -1923,11 +1937,24 @@
         
         let beatInterval = Math.max(16, 45 - (progression * 29));
         
+        let notes = END_MUSIC;
+        let type = 'end';
+        
+        if (activeLevel < 5 || activeLevel === 15) {
+            notes = OVERWORLD_MUSIC;
+            type = 'overworld';
+            beatInterval = Math.max(22, 60 - (progression * 38));
+        } else if ((activeLevel >= 5 && activeLevel < 10) || activeLevel === 16) {
+            notes = NETHER_MUSIC;
+            type = 'nether';
+            beatInterval = Math.max(20, 52 - (progression * 32));
+        }
+        
         musicBeatTimer += getGameSpeed();
         if (musicBeatTimer >= beatInterval) {
             musicBeatTimer = 0;
-            playMusicNote(MUSIC_NOTES[musicNoteIndex]);
-            musicNoteIndex = (musicNoteIndex + 1) % MUSIC_NOTES.length;
+            playMusicNote(notes[musicNoteIndex], type);
+            musicNoteIndex = (musicNoteIndex + 1) % notes.length;
         }
     }
 
