@@ -370,8 +370,8 @@
         {
             name: "Nether Fortress", winScore: 45,
             bg: 'nether_fortress', cloudType: 'ash',
-            ground: { top: '#4f141b', side: '#2e0509', detail: '#1c0002' },
-            pillar: { top: '#4f141b', side: '#2e0509', detail: '#1c0002' },
+            ground: { top: '#2e0915', side: '#1f030a', detail: '#0c0003' },
+            pillar: { top: '#2e0915', side: '#1f030a', detail: '#0c0003' },
             enemies: ['ghast', 'magma_cube'],
             points: { small: 'quartz', large: 'netherite' },
             speedMult: 1.4,
@@ -692,7 +692,7 @@
             } else if (lvlBg === 'mushroom_fields') {
                 return '#4a154b';
             } else if (lvlBg === 'nether_fortress') {
-                return '#2a0408';
+                return '#0f0205';
             } else if (lvlBg === 'void_islands') {
                 return '#04000a';
             }
@@ -732,9 +732,19 @@
             ctx.fillStyle = colors.side; ctx.fillRect(0, this.y, LOGICAL_WIDTH, this.h);
             ctx.fillStyle = colors.top; ctx.fillRect(0, this.y, LOGICAL_WIDTH, 15);
             ctx.fillStyle = colors.detail;
-            for(let i=0; i<this.h; i+=20) {
-                for(let j= -20; j<LOGICAL_WIDTH+20; j+=20) {
-                    if ((i+(j-this.x))%60 === 0) ctx.fillRect(j + (this.x % 20), this.y + i + 15, 10, 10);
+            if (activeLevel === 16) {
+                for (let i = 15; i < this.h; i += 10) {
+                    ctx.fillRect(0, this.y + i, LOGICAL_WIDTH, 2);
+                    let offset = (Math.floor(i / 10) % 2 === 0 ? 0 : 10) + (this.x % 20);
+                    for (let j = offset - 20; j < LOGICAL_WIDTH + 20; j += 20) {
+                        ctx.fillRect(j, this.y + i, 2, 10);
+                    }
+                }
+            } else {
+                for(let i=0; i<this.h; i+=20) {
+                    for(let j= -20; j<LOGICAL_WIDTH+20; j+=20) {
+                        if ((i+(j-this.x))%60 === 0) ctx.fillRect(j + (this.x % 20), this.y + i + 15, 10, 10);
+                    }
                 }
             }
         },
@@ -1557,9 +1567,19 @@
             let colors = LEVELS[activeLevel].pillar;
             ctx.fillStyle = colors.side; ctx.fillRect(x, y, w, h);
             ctx.fillStyle = colors.detail;
-            for(let i=0; i<h; i+=20) {
-                for(let j=0; j<w; j+=20) {
-                    if ((i+j)%60 === 0) ctx.fillRect(x+j, y+i, 10, 10);
+            if (activeLevel === 16) {
+                for (let i = 0; i < h; i += 10) {
+                    ctx.fillRect(x, y + i, w, 2);
+                    let offset = (Math.floor(i / 10) % 2 === 0 ? 0 : 10);
+                    for (let j = offset; j < w; j += 20) {
+                        ctx.fillRect(x + j, y + i, 2, 10);
+                    }
+                }
+            } else {
+                for(let i=0; i<h; i+=20) {
+                    for(let j=0; j<w; j+=20) {
+                        if ((i+j)%60 === 0) ctx.fillRect(x+j, y+i, 10, 10);
+                    }
                 }
             }
             ctx.fillStyle = colors.top;
