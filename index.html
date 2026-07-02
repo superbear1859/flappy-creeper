@@ -948,7 +948,7 @@
             this.isDying = true;
             this.dyingTimer = 45;
             triggerShake(15, 3);
-            playHitSound();
+            playCreeperHiss();
         },
 
         triggerExplosion() {
@@ -956,7 +956,7 @@
             this.exploded = true;
             triggerShake(40, 25); flashAlpha = 1.0;
             effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize/2, ['#ffffff', '#ffaa00', '#ff0000', '#444444', '#10c010'], 120, 2.5);
-            playExplosionSound();
+            playCreeperBoom();
             
             // Blow up all visible pillars on screen
             pillars.items.forEach(p => {
@@ -1775,6 +1775,81 @@
         
         osc.start();
         osc.stop(audioCtx.currentTime + 0.4);
+    }
+
+    function playCreeperHiss() {
+        if (!audioCtx) return;
+        let bufferSize = audioCtx.sampleRate * 0.75;
+        let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        let data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        let noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        
+        let filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        
+        let gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime + 0.75);
+        
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        noise.start();
+    }
+
+    function playCreeperBoom() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime;
+        
+        let osc = audioCtx.createOscillator();
+        let oscGain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.linearRampToValueAtTime(10, now + 0.6);
+        oscGain.gain.setValueAtTime(0.4, now);
+        oscGain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+        
+        let lowpass = audioCtx.createBiquadFilter();
+        lowpass.type = 'lowpass';
+        lowpass.frequency.setValueAtTime(200, now);
+        
+        osc.connect(lowpass);
+        lowpass.connect(oscGain);
+        oscGain.connect(audioCtx.destination);
+        
+        let bufferSize = audioCtx.sampleRate * 0.5;
+        let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        let data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        let noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        
+        let bandpass = audioCtx.createBiquadFilter();
+        bandpass.type = 'bandpass';
+        bandpass.frequency.setValueAtTime(400, now);
+        bandpass.frequency.linearRampToValueAtTime(100, now + 0.5);
+        
+        let noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.45, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        
+        noise.connect(bandpass);
+        bandpass.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+        
+        osc.start(now);
+        osc.stop(now + 0.6);
+        noise.start(now);
     }
 
     function playPowerupSound() {
