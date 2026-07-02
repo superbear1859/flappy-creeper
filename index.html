@@ -1635,7 +1635,18 @@
     // GAME LOOP & UI
     // ----------------------------------------------------
     function startGame(levelIndex) {
-        if (levelIndex > unlockedLevel) return;
+        let isLevelPlayable = false;
+        if (levelIndex < 15) {
+            isLevelPlayable = levelIndex <= unlockedLevel;
+        } else if (levelIndex === 15) {
+            isLevelPlayable = unlockedLevel >= 5;
+        } else if (levelIndex === 16) {
+            isLevelPlayable = unlockedLevel >= 10;
+        } else if (levelIndex === 17) {
+            isLevelPlayable = localStorage.getItem('enderDragonBeaten') === 'true';
+        }
+
+        if (!isLevelPlayable) return;
         activeLevel = levelIndex;
         
         // Reset Everything
