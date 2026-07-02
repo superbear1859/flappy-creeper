@@ -1819,7 +1819,7 @@
         lowpass.type = 'lowpass';
         lowpass.frequency.setValueAtTime(500, now);
         
-        oscGain.gain.setValueAtTime(0.4, now);
+        oscGain.gain.setValueAtTime(0.85, now);
         oscGain.gain.linearRampToValueAtTime(0.001, now + 0.55);
         
         osc.connect(lowpass);
@@ -1842,7 +1842,7 @@
         filter.frequency.linearRampToValueAtTime(400, now + 0.45);
         
         let noiseGain = audioCtx.createGain();
-        noiseGain.gain.setValueAtTime(0.5, now);
+        noiseGain.gain.setValueAtTime(0.9, now);
         noiseGain.gain.linearRampToValueAtTime(0.001, now + 0.45);
         
         noise.connect(filter);
