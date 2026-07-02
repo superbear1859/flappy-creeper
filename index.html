@@ -1017,6 +1017,7 @@
         deathTimer: 0,
         facingLeft: true,
         wingAngle: 0,
+        hurtCooldown: 0,
 
         reset() {
             this.x = LOGICAL_WIDTH + 150; // spawn off-screen initially
@@ -1028,6 +1029,7 @@
             this.swoopTimer = 0;
             this.shootTimer = 0;
             this.deathTimer = 0;
+            this.hurtCooldown = 0;
         },
 
         update() {
@@ -1048,6 +1050,9 @@
             }
 
             let speed = getGameSpeed();
+            if (this.hurtCooldown > 0) {
+                this.hurtCooldown -= speed;
+            }
 
             if (this.state === 'hover') {
                 if (this.x > LOGICAL_WIDTH - 110) {
@@ -1115,8 +1120,9 @@
         },
 
         takeDamage(amount) {
-            if (this.health <= 0 || currentState !== state.game) return;
+            if (this.health <= 0 || this.hurtCooldown > 0 || currentState !== state.game) return;
             this.health = Math.max(0, this.health - amount);
+            this.hurtCooldown = 15;
             effects.addExplosion(this.x + this.w/2, this.y + this.h/2, ['#ffffff', '#ff00ff', '#5500aa'], 15, 0.8, 0.06, true);
             effects.addText(this.x + this.w/2, this.y, `-${amount}`, "#ff00ff");
             triggerShake(6, 4);
@@ -1170,6 +1176,11 @@
             ctx.fillStyle = '#ff00ff';
             ctx.fillRect(-10, -25, 35, 22);
             ctx.restore();
+
+            if (this.hurtCooldown > 0) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                ctx.fillRect(this.x - 30, this.y - 15, this.w + 50, this.h + 25);
+            }
 
             ctx.restore();
 
