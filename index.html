@@ -1779,6 +1779,7 @@
 
     function playCreeperHiss() {
         if (!audioCtx) return;
+        let now = audioCtx.currentTime;
         let bufferSize = audioCtx.sampleRate * 0.75;
         let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         let data = buffer.getChannelData(0);
@@ -1791,17 +1792,17 @@
         
         let filter = audioCtx.createBiquadFilter();
         filter.type = 'highpass';
-        filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        filter.frequency.setValueAtTime(1200, now);
         
         let gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime + 0.75);
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.35, now + 0.75);
         
         noise.connect(filter);
         filter.connect(gain);
         gain.connect(audioCtx.destination);
         
-        noise.start();
+        noise.start(now);
     }
 
     function playCreeperBoom() {
@@ -1811,20 +1812,21 @@
         let osc = audioCtx.createOscillator();
         let oscGain = audioCtx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(120, now);
-        osc.frequency.linearRampToValueAtTime(10, now + 0.6);
-        oscGain.gain.setValueAtTime(0.4, now);
-        oscGain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.linearRampToValueAtTime(70, now + 0.55);
         
         let lowpass = audioCtx.createBiquadFilter();
         lowpass.type = 'lowpass';
-        lowpass.frequency.setValueAtTime(200, now);
+        lowpass.frequency.setValueAtTime(500, now);
+        
+        oscGain.gain.setValueAtTime(0.4, now);
+        oscGain.gain.linearRampToValueAtTime(0.001, now + 0.55);
         
         osc.connect(lowpass);
         lowpass.connect(oscGain);
         oscGain.connect(audioCtx.destination);
         
-        let bufferSize = audioCtx.sampleRate * 0.5;
+        let bufferSize = audioCtx.sampleRate * 0.45;
         let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         let data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -1834,17 +1836,17 @@
         let noise = audioCtx.createBufferSource();
         noise.buffer = buffer;
         
-        let bandpass = audioCtx.createBiquadFilter();
-        bandpass.type = 'bandpass';
-        bandpass.frequency.setValueAtTime(400, now);
-        bandpass.frequency.linearRampToValueAtTime(100, now + 0.5);
+        let filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1000, now);
+        filter.frequency.linearRampToValueAtTime(400, now + 0.45);
         
         let noiseGain = audioCtx.createGain();
-        noiseGain.gain.setValueAtTime(0.45, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        noiseGain.gain.setValueAtTime(0.5, now);
+        noiseGain.gain.linearRampToValueAtTime(0.001, now + 0.45);
         
-        noise.connect(bandpass);
-        bandpass.connect(noiseGain);
+        noise.connect(filter);
+        filter.connect(noiseGain);
         noiseGain.connect(audioCtx.destination);
         
         osc.start(now);
