@@ -1823,14 +1823,14 @@
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         
-        osc.type = 'triangle';
+        osc.type = 'square';
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         
-        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
         
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.18);
+        osc.stop(audioCtx.currentTime + 0.12);
     }
 
     function updateSoundtrack() {
