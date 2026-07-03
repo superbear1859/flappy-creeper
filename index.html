@@ -80,10 +80,11 @@
             <!-- Difficulty Select -->
             <div class="mt-4 flex flex-col items-center gap-1.5 pointer-events-auto w-full max-w-sm">
                 <span class="text-white text-[9px] pixel-text-shadow tracking-widest text-yellow-400">DIFFICULTY</span>
-                <div class="flex gap-2 w-full justify-around">
-                    <button id="diff-easy" onclick="setDifficulty('easy')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">EASY</button>
-                    <button id="diff-normal" onclick="setDifficulty('normal')" class="flex-1 py-1.5 bg-blue-700 border-2 border-blue-500 hover:border-blue-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">NORMAL</button>
-                    <button id="diff-hard" onclick="setDifficulty('hard')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">HARD</button>
+                <div class="flex gap-1 w-full justify-around">
+                    <button id="diff-easy" onclick="setDifficulty('easy')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">EASY</button>
+                    <button id="diff-normal" onclick="setDifficulty('normal')" class="flex-1 py-1.5 bg-blue-700 border-2 border-blue-500 hover:border-blue-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">NORMAL</button>
+                    <button id="diff-hard" onclick="setDifficulty('hard')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">HARD</button>
+                    <button id="diff-simple" onclick="setDifficulty('simple')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">SIMPLE</button>
                 </div>
             </div>
             
@@ -541,18 +542,21 @@
         const btnEasy = document.getElementById('diff-easy');
         const btnNormal = document.getElementById('diff-normal');
         const btnHard = document.getElementById('diff-hard');
-        if (!btnEasy || !btnNormal || !btnHard) return;
+        const btnSimple = document.getElementById('diff-simple');
+        if (!btnEasy || !btnNormal || !btnHard || !btnSimple) return;
 
-        [btnEasy, btnNormal, btnHard].forEach(btn => {
-            btn.className = "flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
+        [btnEasy, btnNormal, btnHard, btnSimple].forEach(btn => {
+            btn.className = "flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
         });
 
         if (activeDifficulty === 'easy') {
-            btnEasy.className = "flex-1 py-1.5 bg-green-700 border-2 border-green-500 hover:border-green-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
+            btnEasy.className = "flex-1 py-1.5 bg-green-700 border-2 border-green-500 hover:border-green-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
         } else if (activeDifficulty === 'normal') {
-            btnNormal.className = "flex-1 py-1.5 bg-blue-700 border-2 border-blue-500 hover:border-blue-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
+            btnNormal.className = "flex-1 py-1.5 bg-blue-700 border-2 border-blue-500 hover:border-blue-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
         } else if (activeDifficulty === 'hard') {
-            btnHard.className = "flex-1 py-1.5 bg-red-700 border-2 border-red-500 hover:border-red-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
+            btnHard.className = "flex-1 py-1.5 bg-red-700 border-2 border-red-500 hover:border-red-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
+        } else if (activeDifficulty === 'simple') {
+            btnSimple.className = "flex-1 py-1.5 bg-purple-700 border-2 border-purple-500 hover:border-purple-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
         }
     }
 
@@ -1265,7 +1269,9 @@
                 this.shootTimer += speed;
                 if (this.shootTimer >= 145) {
                     this.shootTimer = 0;
-                    this.shootFireball();
+                    if (activeDifficulty !== 'simple') {
+                        this.shootFireball();
+                    }
                 }
 
                 this.swoopTimer += speed;
@@ -1837,20 +1843,25 @@
                 let enemyChance = 0.40;
                 if (activeDifficulty === 'easy') enemyChance = 0.20;
                 else if (activeDifficulty === 'hard') enemyChance = 0.55;
+                else if (activeDifficulty === 'simple') enemyChance = 0.0;
                 let spawnEnemy = activeLevel !== 14 && gameFrames > 150 && Math.random() < enemyChance; 
 
                 if (spawnPowerup) {
                     let lvlPoints = LEVELS[activeLevel].points;
                     let pType = lvlPoints.small; let pRoll = Math.random();
-                    if (pRoll < 0.08) pType = 'tnt'; else if (pRoll < 0.16) pType = lvlPoints.large;
-                    else if (pRoll < 0.25) pType = 'slime'; else if (pRoll < 0.34) pType = 'elytra';
-                    else if (pRoll < 0.43) pType = 'blaze'; else if (pRoll < 0.51) pType = 'chorus';
-                    else if (pRoll < 0.59) pType = 'pearl'; else if (pRoll < 0.67) pType = 'clock';
-                    else if (pRoll < 0.75) pType = 'swing';
-                    else {
-                        let appleMult = LEVELS[activeLevel].appleChanceMult || 1.0;
-                        let appleThreshold = 0.75 + (0.08 * appleMult);
-                        if (pRoll < Math.min(0.98, appleThreshold)) pType = 'apple';
+                    if (activeDifficulty === 'simple') {
+                        pType = Math.random() < 0.25 ? lvlPoints.large : lvlPoints.small;
+                    } else {
+                        if (pRoll < 0.08) pType = 'tnt'; else if (pRoll < 0.16) pType = lvlPoints.large;
+                        else if (pRoll < 0.25) pType = 'slime'; else if (pRoll < 0.34) pType = 'elytra';
+                        else if (pRoll < 0.43) pType = 'blaze'; else if (pRoll < 0.51) pType = 'chorus';
+                        else if (pRoll < 0.59) pType = 'pearl'; else if (pRoll < 0.67) pType = 'clock';
+                        else if (pRoll < 0.75) pType = 'swing';
+                        else {
+                            let appleMult = LEVELS[activeLevel].appleChanceMult || 1.0;
+                            let appleThreshold = 0.75 + (0.08 * appleMult);
+                            if (pRoll < Math.min(0.98, appleThreshold)) pType = 'apple';
+                        }
                     }
 
                     powerups.items.push({ x: spawnX + this.width/2 - powerups.size/2, y: topPos + currentGap/2 - powerups.size/2, type: pType, collected: false });
