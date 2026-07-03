@@ -500,7 +500,7 @@
             else if (activeTab === 1 && isUnlocked) titleClass = 'text-red-300';
             else if (activeTab === 2 && isUnlocked) titleClass = 'text-purple-300';
             
-            if (i === 14 && isUnlocked) {
+            if (i === 14 && isUnlocked && activeDifficulty !== 'simple') {
                 btn.className = `level-btn unlocked border-pink-500 shadow-[0_0_15px_rgba(255,0,255,0.4)]`;
                 titleClass = 'text-pink-400 font-bold';
             } else if (i >= 15 && isUnlocked) {
@@ -510,13 +510,14 @@
             
             const num = i >= 15 ? "BONUS" : ((i % 5) + 1);
             let titleText = `${num}. ${lvl.name.toUpperCase()}`;
-            if (i === 14) titleText += " [BOSS FIGHT]";
+            if (i === 14 && activeDifficulty !== 'simple') titleText += " [BOSS FIGHT]";
             
             let goalText = "";
-            if (i === 14) {
+            if (i === 14 && activeDifficulty !== 'simple') {
                 goalText = isUnlocked ? "Goal: Defeat Ender Dragon" : "Goal: Defeat Ender Dragon (Locked)";
             } else {
-                goalText = isUnlocked ? `Goal: ${lvl.winScore} Points` : `Goal: ${lvl.winScore} Points (Locked)`;
+                let winScore = i === 14 ? 60 : lvl.winScore;
+                goalText = isUnlocked ? `Goal: ${winScore} Points` : `Goal: ${winScore} Points (Locked)`;
             }
             
             btn.innerHTML = `
@@ -536,6 +537,7 @@
         activeDifficulty = diff;
         localStorage.setItem('flappyCreeperDifficulty', diff);
         updateDifficultyUI();
+        updateMenuLocks();
     }
 
     function updateDifficultyUI() {
@@ -1002,7 +1004,7 @@
                 if (this.shrinkTimer === 0) { this.currentSize = this.baseSize; this.y -= 8; }
             } else { this.currentSize = this.baseSize; }
 
-            if (activeLevel === 14) {
+            if (activeLevel === 14 && activeDifficulty !== 'simple') {
                 this.transform = 'blaze';
                 this.transformTimer = 999999;
             } else if (this.transformTimer > 0) {
@@ -1843,7 +1845,7 @@
                 let spawnX = LOGICAL_WIDTH;
                 
                 let newPillar = { x: spawnX, top: topPos, bottom: topPos + currentGap, passed: false, destroyed: false };
-                if (activeLevel === 14) {
+                if (activeLevel === 14 && activeDifficulty !== 'simple') {
                     newPillar.crystal = {
                         x: spawnX + this.width/2 - 12,
                         y: topPos + currentGap - 24,
@@ -2207,7 +2209,7 @@
         if (currentState !== state.game) return;
         
         let progression = 0;
-        if (activeLevel === 14 && typeof enderDragon !== 'undefined') {
+        if (activeLevel === 14 && typeof enderDragon !== 'undefined' && activeDifficulty !== 'simple') {
             progression = 1.0 - (enderDragon.health / enderDragon.maxHealth);
         } else {
             let winScore = LEVELS[activeLevel].winScore;
@@ -2267,7 +2269,7 @@
         document.getElementById('pauseContainer').classList.remove('hidden');
 
         creeper.reset(); pillars.reset(); powerups.reset(); enemies.reset(); effects.reset(); playerProjectiles.reset();
-        if (activeLevel === 14) {
+        if (activeLevel === 14 && activeDifficulty !== 'simple') {
             enderDragon.reset();
             dragonProjectiles.reset();
         }
@@ -2403,7 +2405,7 @@
         if (shakeFrames > 0) { ctx.translate((Math.random() - 0.5) * shakeIntensity, (Math.random() - 0.5) * shakeIntensity); }
         bg.draw(); pillars.draw(); powerups.draw(); enemies.draw(); playerProjectiles.draw();
         
-        if (activeLevel === 14) {
+        if (activeLevel === 14 && activeDifficulty !== 'simple') {
             enderDragon.draw();
             dragonProjectiles.draw();
         }
@@ -2438,7 +2440,7 @@
             gameFrames += getGameSpeed();
             bg.update(); pillars.update(); powerups.update(); enemies.update(); playerProjectiles.update();
             
-            if (activeLevel === 14) {
+            if (activeLevel === 14 && activeDifficulty !== 'simple') {
                 enderDragon.update();
                 dragonProjectiles.update();
             }
