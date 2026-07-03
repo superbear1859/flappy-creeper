@@ -100,6 +100,15 @@
             </div>
         </div>
 
+
+        <!-- Pause UI -->
+        <div id="pauseContainer" class="absolute top-4 right-4 flex items-center gap-2 hidden pointer-events-auto z-10">
+            <span class="text-white/60 font-mono text-[9px] pixel-text-shadow select-none">use [P] to pause too!</span>
+            <button onclick="togglePause()" class="w-8 h-8 bg-gray-800/80 hover:bg-gray-700/90 text-white font-bold border-2 border-gray-600 rounded flex items-center justify-center cursor-pointer transition-transform active:scale-95 text-xs select-none">
+                <span id="pauseBtnIcon">II</span>
+            </button>
+        </div>
+
         <!-- In-Game HUD -->
         <div id="hud" class="absolute top-10 w-full flex flex-col items-center hidden pointer-events-none">
             <div class="flex gap-4 items-center">
@@ -149,6 +158,7 @@
 
     const state = { menu: 0, game: 1, over: 2, win: 3 };
     let currentState = state.menu;
+    let isPaused = false;
 
     // Progression System
     let unlockedLevel = parseInt(localStorage.getItem('flappyCreeperUnlocked2')) || 0;
@@ -945,6 +955,7 @@
 
         startDying() {
             if (this.isDying || this.exploded || currentState === state.over || currentState === state.win) return;
+            document.getElementById('pauseContainer').classList.add('hidden');
             this.isDying = true;
             this.dyingTimer = 45;
             triggerShake(15, 3);
@@ -2016,6 +2027,11 @@
         activeLevel = levelIndex;
         
         // Reset Everything
+        isPaused = false;
+        const pauseBtnIcon = document.getElementById('pauseBtnIcon');
+        if (pauseBtnIcon) pauseBtnIcon.innerText = "II";
+        document.getElementById('pauseContainer').classList.remove('hidden');
+
         creeper.reset(); pillars.reset(); powerups.reset(); enemies.reset(); effects.reset(); playerProjectiles.reset();
         if (activeLevel === 14) {
             enderDragon.reset();
@@ -2052,6 +2068,7 @@
             updateMenuLocks();
         }
 
+        document.getElementById('pauseContainer').classList.add('hidden');
         hud.classList.add('hidden');
         endScreen.classList.remove('hidden'); endScreen.classList.add('flex');
         endTitle.innerText = "LEVEL CLEARED!";
@@ -2059,7 +2076,18 @@
         finalScoreEl.innerText = score;
     }
 
+    function togglePause() {
+        if (currentState !== state.game) return;
+        isPaused = !isPaused;
+        const pauseBtnIcon = document.getElementById('pauseBtnIcon');
+        if (pauseBtnIcon) {
+            pauseBtnIcon.innerText = isPaused ? "▶" : "II";
+        }
+    }
+
     function goToMenu() {
+        isPaused = false;
+        document.getElementById('pauseContainer').classList.add('hidden');
         endScreen.classList.add('hidden'); endScreen.classList.remove('flex');
         menuScreen.classList.remove('hidden');
         currentState = state.menu;
@@ -2067,13 +2095,19 @@
     }
 
     function handleInput() {
-        if (currentState === state.game) creeper.flap();
+        if (currentState === state.game && !isPaused) creeper.flap();
     }
 
     let cheatBuffer = "";
     const CHEAT_CODE = "superbear1859yyyyy";
 
     window.addEventListener('keydown', (e) => {
+        if ((e.key === 'p' || e.key === 'P') && currentState === state.game) {
+            e.preventDefault();
+            togglePause();
+            return;
+        }
+
         if ((e.code === 'Space' || e.code === 'ArrowUp') && currentState === state.game) {
             e.preventDefault();
             handleInput();
@@ -2114,10 +2148,29 @@
 
         ground.draw(); creeper.draw(); effects.draw();
         if (flashAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`; ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT); }
+        
+        if (isPaused && currentState === state.game) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '28px "Outfit", "Courier New", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#000000';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillText("PAUSED", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2);
+            ctx.shadowColor = 'transparent';
+        }
+        
         ctx.restore(); 
     }
 
     function update() {
+        if (isPaused && currentState === state.game) return;
+        
         if (currentState !== state.menu) {
             // Apply game time specifically for slow motion
             gameFrames += getGameSpeed();
