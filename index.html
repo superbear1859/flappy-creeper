@@ -1917,7 +1917,7 @@
     let musicNoteIndex = 0;
     
     const OVERWORLD_MUSIC = [293.66, 392.00, 440.00, 493.88, 440.00, 392.00, 293.66, 329.63, 392.00, 440.00, 392.00, 329.63];
-    const NETHER_MUSIC = [130.81, 138.59, 146.83, 138.59, 110.00, 116.54, 123.47, 116.54];
+    const NETHER_MUSIC = [261.63, 277.18, 293.66, 277.18, 220.00, 233.08, 246.94, 233.08];
     const END_MUSIC = [220.00, 246.94, 261.63, 293.66];
 
     function initAudio() {
@@ -2189,8 +2189,9 @@
             gain.gain.linearRampToValueAtTime(0.24, audioCtx.currentTime + 0.04);
             gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
         } else if (type === 'nether') {
-            osc.type = 'sine';
-            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.20, audioCtx.currentTime + 0.04);
             gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
         } else {
             osc.type = 'square';
