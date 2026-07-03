@@ -75,6 +75,16 @@
             <div id="levelListContainer" class="w-full max-w-sm flex flex-col gap-2 overflow-y-auto max-h-[220px] pointer-events-auto pr-1">
                 <!-- Level buttons will be injected here dynamically -->
             </div>
+
+            <!-- Difficulty Select -->
+            <div class="mt-4 flex flex-col items-center gap-1.5 pointer-events-auto w-full max-w-sm">
+                <span class="text-white text-[9px] pixel-text-shadow tracking-widest text-yellow-400">DIFFICULTY</span>
+                <div class="flex gap-2 w-full justify-around">
+                    <button id="diff-easy" onclick="setDifficulty('easy')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">EASY</button>
+                    <button id="diff-normal" onclick="setDifficulty('normal')" class="flex-1 py-1.5 bg-blue-700 border-2 border-blue-500 hover:border-blue-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">NORMAL</button>
+                    <button id="diff-hard" onclick="setDifficulty('hard')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">HARD</button>
+                </div>
+            </div>
             
             <div class="mt-8 text-white text-[10px] md:text-xs pixel-text-shadow max-w-sm bg-black/50 p-4 rounded border border-gray-600">
                 <p class="mb-2 text-yellow-400">HOW TO PLAY:</p>
@@ -160,6 +170,7 @@
     let currentState = state.menu;
     let isPaused = false;
     let isInputActive = false;
+    let activeDifficulty = localStorage.getItem('flappyCreeperDifficulty') || 'normal';
 
     // Progression System
     let unlockedLevel = parseInt(localStorage.getItem('flappyCreeperUnlocked2')) || 0;
@@ -516,7 +527,34 @@
     function updateMenuLocks() {
         renderLevels();
     }
+    
+    function setDifficulty(diff) {
+        activeDifficulty = diff;
+        localStorage.setItem('flappyCreeperDifficulty', diff);
+        updateDifficultyUI();
+    }
+
+    function updateDifficultyUI() {
+        const btnEasy = document.getElementById('diff-easy');
+        const btnNormal = document.getElementById('diff-normal');
+        const btnHard = document.getElementById('diff-hard');
+        if (!btnEasy || !btnNormal || !btnHard) return;
+
+        [btnEasy, btnNormal, btnHard].forEach(btn => {
+            btn.className = "flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
+        });
+
+        if (activeDifficulty === 'easy') {
+            btnEasy.className = "flex-1 py-1.5 bg-green-700 border-2 border-green-500 hover:border-green-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
+        } else if (activeDifficulty === 'normal') {
+            btnNormal.className = "flex-1 py-1.5 bg-blue-700 border-2 border-blue-500 hover:border-blue-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
+        } else if (activeDifficulty === 'hard') {
+            btnHard.className = "flex-1 py-1.5 bg-red-700 border-2 border-red-500 hover:border-red-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer";
+        }
+    }
+
     switchTab(Math.floor(unlockedLevel / 5));
+    updateDifficultyUI();
 
     function triggerShake(framesDur, intensity) { shakeFrames = framesDur; shakeIntensity = intensity; }
 
@@ -525,6 +563,10 @@
         let levelMult = LEVELS[activeLevel].speedMult || 1.0;
         let difficultyMult = 1.0 + Math.min(1.5, score * 0.025);
         let speed = levelMult * difficultyMult;
+        
+        if (activeDifficulty === 'easy') speed *= 0.75;
+        else if (activeDifficulty === 'hard') speed *= 1.25;
+        
         if (creeper.slowMoTimer > 0) speed *= 0.45; 
         return speed;
     }
@@ -1702,6 +1744,9 @@
             let speed = getGameSpeed();
             
             let currentGap = LEVELS[activeLevel].pillarGap || 230;
+            if (activeDifficulty === 'easy') currentGap += 20;
+            else if (activeDifficulty === 'hard') currentGap -= 20;
+            
             let currentSpawnDist = LEVELS[activeLevel].spawnDist || 240;
 
             this.distanceCounter += this.dx * speed;
@@ -1726,7 +1771,10 @@
 
                 let spawnPowerupChance = LEVELS[activeLevel].powerupChance || 0.35;
                 let spawnPowerup = Math.random() < spawnPowerupChance; 
-                let spawnEnemy = activeLevel !== 14 && gameFrames > 150 && Math.random() < 0.40; 
+                let enemyChance = 0.40;
+                if (activeDifficulty === 'easy') enemyChance = 0.20;
+                else if (activeDifficulty === 'hard') enemyChance = 0.55;
+                let spawnEnemy = activeLevel !== 14 && gameFrames > 150 && Math.random() < enemyChance; 
 
                 if (spawnPowerup) {
                     let lvlPoints = LEVELS[activeLevel].points;
