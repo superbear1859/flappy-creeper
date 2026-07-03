@@ -66,10 +66,11 @@
             <h1 class="text-3xl md:text-5xl text-green-400 pixel-text-shadow mb-8 tracking-widest leading-tight mt-4" style="animation: flashText 2s infinite;">FLAPPY<br>CREEPER</h1>
             
             <!-- Dynamic Level Selection Tabs -->
-            <div class="w-full max-w-sm flex gap-1 mb-2 justify-around pointer-events-auto">
-                <button id="tab0" class="tab-btn active border-b-4 border-green-500 text-green-400 text-[10px] py-2 px-1 flex-1 font-bold" onclick="switchTab(0)">OVERWORLD</button>
-                <button id="tab1" class="tab-btn border-b-4 border-transparent text-gray-500 text-[10px] py-2 px-1 flex-1 font-bold" onclick="switchTab(1)">NETHER</button>
-                <button id="tab2" class="tab-btn border-b-4 border-transparent text-gray-500 text-[10px] py-2 px-1 flex-1 font-bold" onclick="switchTab(2)">THE END</button>
+            <div class="w-full max-w-sm flex gap-0.5 mb-2 justify-around pointer-events-auto">
+                <button id="tab0" class="tab-btn active border-b-4 border-green-500 text-green-400 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(0)">OVERWORLD</button>
+                <button id="tab1" class="tab-btn border-b-4 border-transparent text-gray-500 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(1)">NETHER</button>
+                <button id="tab2" class="tab-btn border-b-4 border-transparent text-gray-500 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(2)">THE END</button>
+                <button id="tab3" class="tab-btn border-b-4 border-transparent text-gray-500 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(3)">CHALLENGES</button>
             </div>
 
             <!-- Dynamic Level List Container -->
@@ -119,6 +120,15 @@
             <button onclick="togglePause()" class="w-8 h-8 bg-gray-800/80 hover:bg-gray-700/90 text-white font-bold border-2 border-gray-600 rounded flex items-center justify-center cursor-pointer transition-transform active:scale-95 text-xs select-none">
                 <span id="pauseBtnIcon">II</span>
             </button>
+        </div>
+
+        <!-- Paused Overlay Screen -->
+        <div id="pausedOverlay" class="absolute top-0 left-0 w-full h-full bg-black/60 z-20 flex flex-col items-center justify-center hidden pointer-events-auto">
+            <div class="bg-black/90 p-6 rounded border-2 border-gray-600 flex flex-col items-center gap-3.5 max-w-[200px] w-full text-center">
+                <div class="text-white text-[11px] font-bold pixel-text-shadow tracking-widest leading-none mb-2">GAME PAUSED</div>
+                <button onclick="togglePause()" class="w-full py-1.5 bg-green-700 border-2 border-green-500 hover:border-green-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">RESUME</button>
+                <button onclick="goToMenu()" class="w-full py-1.5 bg-red-700 border-2 border-red-500 hover:border-red-400 text-white font-bold text-[8px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">QUIT TO MENU</button>
+            </div>
         </div>
 
         <!-- In-Game HUD -->
@@ -418,6 +428,60 @@
             spawnDist: 155,
             powerupChance: 0.55,
             appleChanceMult: 3.0
+        },
+        {
+            name: "Slime Dash", winScore: 35,
+            bg: 'plains', cloudType: 'fluffy',
+            ground: { top: '#55a138', side: '#4c9f38', detail: '#3b8b27' },
+            pillar: { top: '#2c2c2c', side: '#222222', detail: '#111111' },
+            enemies: ['zombie', 'skeleton'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.1, pillarGap: 180, spawnDist: 210, powerupChance: 0.0
+        },
+        {
+            name: "Elytra Flight", winScore: 35,
+            bg: 'jungle', cloudType: 'fluffy',
+            ground: { top: '#5c3f29', side: '#4a3220', detail: '#1a1005' },
+            pillar: { top: '#2c2c2c', side: '#222222', detail: '#111111' },
+            enemies: ['bat'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.15, pillarGap: 175, spawnDist: 200, powerupChance: 0.0
+        },
+        {
+            name: "Blaze Barrage", winScore: 40,
+            bg: 'nether_wastes', cloudType: 'ash',
+            ground: { top: '#8a1c1c', side: '#571313', detail: '#300808' },
+            pillar: { top: '#300000', side: '#200000', detail: '#100000' },
+            enemies: ['ghast', 'wither_skeleton'],
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.2, pillarGap: 170, spawnDist: 190, powerupChance: 0.0
+        },
+        {
+            name: "Ender Phase", winScore: 40,
+            bg: 'end_barrens', cloudType: 'void',
+            ground: { top: '#1c1c28', side: '#12121c', detail: '#07070d' },
+            pillar: { top: '#111122', side: '#080811', detail: '#000005' },
+            enemies: ['vex'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.25, pillarGap: 165, spawnDist: 180, powerupChance: 0.0
+        },
+        {
+            name: "Time Warp", winScore: 40,
+            bg: 'soul_sand', cloudType: 'ash',
+            ground: { top: '#4e3f30', side: '#35291e', detail: '#1f160e' },
+            pillar: { top: '#221100', side: '#110500', detail: '#000000' },
+            enemies: ['wither_skeleton'],
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.3, pillarGap: 165, spawnDist: 170, powerupChance: 0.0
+        },
+        {
+            name: "Grapple Swing", winScore: 35,
+            bg: 'cave', cloudType: 'fog',
+            ground: { top: '#3a3a3a', side: '#262626', detail: '#151515' },
+            pillar: { top: '#1f1f1f', side: '#151515', detail: '#0a0a0a' },
+            enemies: ['skeleton'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.05, pillarGap: 180, spawnDist: 215, powerupChance: 0.0
         }
     ];
     let activeLevel = 0;
@@ -426,14 +490,25 @@
 
     function switchTab(tabIndex) {
         activeTab = tabIndex;
-        const tabs = [document.getElementById('tab0'), document.getElementById('tab1'), document.getElementById('tab2')];
-        const colors = ['border-green-500 text-green-400', 'border-red-500 text-red-400', 'border-purple-500 text-purple-400'];
+        const tabs = [
+            document.getElementById('tab0'),
+            document.getElementById('tab1'),
+            document.getElementById('tab2'),
+            document.getElementById('tab3')
+        ];
+        const colors = [
+            'border-green-500 text-green-400',
+            'border-red-500 text-red-400',
+            'border-purple-500 text-purple-400',
+            'border-orange-500 text-orange-400'
+        ];
         
         tabs.forEach((tab, index) => {
+            if (!tab) return;
             if (index === tabIndex) {
-                tab.className = `tab-btn active border-b-4 ${colors[index]} text-[10px] py-2 px-1 flex-1 font-bold`;
+                tab.className = `tab-btn active border-b-4 ${colors[index]} text-[8px] py-2 px-0.5 flex-1 font-bold`;
             } else {
-                tab.className = `tab-btn border-b-4 border-transparent text-gray-500 text-[10px] py-2 px-1 flex-1 font-bold`;
+                tab.className = `tab-btn border-b-4 border-transparent text-gray-500 text-[8px] py-2 px-0.5 flex-1 font-bold`;
             }
         });
         
@@ -470,25 +545,39 @@
         container.innerHTML = '';
         
         const levelIndices = [];
-        const startIndex = activeTab * 5;
-        for (let i = startIndex; i < startIndex + 5; i++) {
-            levelIndices.push(i);
-        }
-
-        if (activeTab === 0 && unlockedLevel >= 5) {
-            levelIndices.push(15);
-        }
-        if (activeTab === 1 && unlockedLevel >= 10) {
-            levelIndices.push(16);
-        }
-        if (activeTab === 2 && localStorage.getItem('enderDragonBeaten') === 'true') {
-            levelIndices.push(17);
+        if (activeTab === 3) {
+            for (let i = 18; i <= 23; i++) {
+                levelIndices.push(i);
+            }
+        } else {
+            const startIndex = activeTab * 5;
+            for (let i = startIndex; i < startIndex + 5; i++) {
+                levelIndices.push(i);
+            }
+            if (activeTab === 0 && unlockedLevel >= 5) {
+                levelIndices.push(15);
+            }
+            if (activeTab === 1 && unlockedLevel >= 10) {
+                levelIndices.push(16);
+            }
+            if (activeTab === 2 && localStorage.getItem('enderDragonBeaten') === 'true') {
+                levelIndices.push(17);
+            }
         }
         
         for (let idx = 0; idx < levelIndices.length; idx++) {
             const i = levelIndices[idx];
             const lvl = LEVELS[i];
-            const isUnlocked = i >= 15 ? true : (i <= unlockedLevel);
+            
+            let isUnlocked = false;
+            if (i >= 18 && i <= 23) {
+                const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing'];
+                isUnlocked = localStorage.getItem(keys[i - 18]) === 'true';
+            } else if (i >= 15 && i <= 17) {
+                isUnlocked = true;
+            } else {
+                isUnlocked = i <= unlockedLevel;
+            }
             
             const btn = document.createElement('button');
             btn.className = `level-btn ${isUnlocked ? 'unlocked' : ''}`;
@@ -499,21 +588,28 @@
             if (activeTab === 0 && isUnlocked) titleClass = 'text-green-300';
             else if (activeTab === 1 && isUnlocked) titleClass = 'text-red-300';
             else if (activeTab === 2 && isUnlocked) titleClass = 'text-purple-300';
+            else if (activeTab === 3 && isUnlocked) titleClass = 'text-orange-300';
             
             if (i === 14 && isUnlocked && activeDifficulty !== 'simple') {
                 btn.className = `level-btn unlocked border-pink-500 shadow-[0_0_15px_rgba(255,0,255,0.4)]`;
                 titleClass = 'text-pink-400 font-bold';
+            } else if (i >= 18 && isUnlocked) {
+                btn.className = `level-btn unlocked border-orange-500 shadow-[0_0_12px_rgba(255,165,0,0.3)]`;
+                titleClass = 'text-orange-400 font-bold';
             } else if (i >= 15 && isUnlocked) {
                 btn.className = `level-btn unlocked border-yellow-500 shadow-[0_0_12px_rgba(255,215,0,0.3)]`;
                 titleClass = 'text-yellow-400 font-bold';
             }
             
-            const num = i >= 15 ? "BONUS" : ((i % 5) + 1);
-            let titleText = `${num}. ${lvl.name.toUpperCase()}`;
+            const num = i >= 18 ? `CHALLENGE ${i - 17}` : (i >= 15 ? "BONUS" : ((i % 5) + 1));
+            let titleText = i >= 18 ? `${num}: ${lvl.name.toUpperCase()}` : `${num}. ${lvl.name.toUpperCase()}`;
             if (i === 14 && activeDifficulty !== 'simple') titleText += " [BOSS FIGHT]";
             
             let goalText = "";
-            if (i === 14 && activeDifficulty !== 'simple') {
+            if (i >= 18 && i <= 23) {
+                const unlockItems = ['Slime', 'Elytra', 'Blaze Rod', 'Ender Pearl', 'Clock', 'Lead'];
+                goalText = isUnlocked ? `Goal: ${lvl.winScore} Points` : `Unlock: Collect ${unlockItems[i - 18]} in game`;
+            } else if (i === 14 && activeDifficulty !== 'simple') {
                 goalText = isUnlocked ? "Goal: Defeat Ender Dragon" : "Goal: Defeat Ender Dragon (Locked)";
             } else {
                 let winScore = i === 14 ? 60 : lvl.winScore;
@@ -1006,6 +1102,22 @@
 
             if (activeLevel === 14 && activeDifficulty !== 'simple') {
                 this.transform = 'blaze';
+                this.transformTimer = 999999;
+            } else if (activeLevel === 18) {
+                this.transform = 'slime';
+                this.transformTimer = 999999;
+            } else if (activeLevel === 19) {
+                this.transform = 'elytra';
+                this.transformTimer = 999999;
+            } else if (activeLevel === 20) {
+                this.transform = 'blaze';
+                this.transformTimer = 999999;
+            } else if (activeLevel === 21) {
+                this.phaseTimer = 999999;
+            } else if (activeLevel === 22) {
+                this.slowMoTimer = 999999;
+            } else if (activeLevel === 23) {
+                this.transform = 'swing';
                 this.transformTimer = 999999;
             } else if (this.transformTimer > 0) {
                 if (--this.transformTimer === 0) { this.transform = 'none'; transformAlert.classList.add('hidden'); }
@@ -1597,16 +1709,22 @@
                     this.triggerTNT(cx, cy);
                 } else if (p.type === 'slime') {
                     creeper.setTransform('slime', 'SLIME BOUNCE!', 'text-green-400'); effects.addExplosion(cx, cy, ['#55ff55', '#aaffaa'], 25, 0.8);
+                    localStorage.setItem('flappyCreeperUnlockedSlime', 'true');
                 } else if (p.type === 'elytra') {
                     creeper.setTransform('elytra', 'ELYTRA GLIDE!', 'text-gray-300'); effects.addExplosion(cx, cy, ['#777788', '#ffffff'], 25, 0.8);
+                    localStorage.setItem('flappyCreeperUnlockedElytra', 'true');
                 } else if (p.type === 'blaze') {
                     creeper.setTransform('blaze', 'BLAZE FIRE!', 'text-orange-400'); effects.addExplosion(cx, cy, ['#ffaa00', '#ff0000'], 30, 1.0);
+                    localStorage.setItem('flappyCreeperUnlockedBlaze', 'true');
                 } else if (p.type === 'pearl') {
                     creeper.phaseTimer = 360; effects.addExplosion(cx, cy, ['#33aaaa', '#cc00ff'], 25, 0.8); effects.addText(cx, cy, "PHASE", "#66ffff");
+                    localStorage.setItem('flappyCreeperUnlockedPhase', 'true');
                 } else if (p.type === 'clock') {
                     creeper.slowMoTimer = 480; effects.addExplosion(cx, cy, ['#ffd700', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SLOW MO", "#ffd700");
+                    localStorage.setItem('flappyCreeperUnlockedSlow', 'true');
                 } else if (p.type === 'swing') {
                     creeper.setTransform('swing', 'SWING MODE!', 'text-amber-600'); effects.addExplosion(cx, cy, ['#8b5a2b', '#ffffff'], 25, 0.8);
+                    localStorage.setItem('flappyCreeperUnlockedSwing', 'true');
                 }
             }
         },
@@ -2252,6 +2370,9 @@
             isLevelPlayable = unlockedLevel >= 10;
         } else if (levelIndex === 17) {
             isLevelPlayable = localStorage.getItem('enderDragonBeaten') === 'true';
+        } else if (levelIndex >= 18 && levelIndex <= 23) {
+            const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing'];
+            isLevelPlayable = localStorage.getItem(keys[levelIndex - 18]) === 'true';
         }
 
         if (!isLevelPlayable) return;
@@ -2264,6 +2385,8 @@
         
         // Reset Everything
         isPaused = false;
+        const pausedOverlay = document.getElementById('pausedOverlay');
+        if (pausedOverlay) pausedOverlay.classList.add('hidden');
         const pauseBtnIcon = document.getElementById('pauseBtnIcon');
         if (pauseBtnIcon) pauseBtnIcon.innerText = "II";
         document.getElementById('pauseContainer').classList.remove('hidden');
@@ -2319,15 +2442,26 @@
         if (pauseBtnIcon) {
             pauseBtnIcon.innerText = isPaused ? "▶" : "II";
         }
+        
+        const pausedOverlay = document.getElementById('pausedOverlay');
+        if (pausedOverlay) {
+            if (isPaused) {
+                pausedOverlay.classList.remove('hidden');
+            } else {
+                pausedOverlay.classList.add('hidden');
+            }
+        }
     }
 
     function goToMenu() {
         isPaused = false;
         document.getElementById('pauseContainer').classList.add('hidden');
+        const pausedOverlay = document.getElementById('pausedOverlay');
+        if (pausedOverlay) pausedOverlay.classList.add('hidden');
         endScreen.classList.add('hidden'); endScreen.classList.remove('flex');
         menuScreen.classList.remove('hidden');
         currentState = state.menu;
-        switchTab(Math.floor(unlockedLevel / 5));
+        switchTab(activeTab);
     }
 
     function handleInput() {
@@ -2416,17 +2550,6 @@
         if (isPaused && currentState === state.game) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '28px "Outfit", "Courier New", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#000000';
-            ctx.shadowBlur = 6;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-            ctx.fillText("PAUSED", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2);
-            ctx.shadowColor = 'transparent';
         }
         
         ctx.restore(); 
