@@ -159,6 +159,7 @@
     const state = { menu: 0, game: 1, over: 2, win: 3 };
     let currentState = state.menu;
     let isPaused = false;
+    let isInputActive = false;
 
     // Progression System
     let unlockedLevel = parseInt(localStorage.getItem('flappyCreeperUnlocked2')) || 0;
@@ -769,9 +770,24 @@
     const creeper = {
         baseSize: 32, currentSize: 32, x: 80, y: 200, velocity: 0, gravityBase: 0.25, gravityActive: 0.25, jump: 5.5, rotation: 0, exploded: false,
         invincibleTimer: 0, shrinkTimer: 0, phaseTimer: 0, slowMoTimer: 0, transformTimer: 0, transform: 'none', isDying: false, dyingTimer: 0,
+        isSwinging: false, swingAnchorX: 0, swingAnchorY: 0, swingR: 0,
 
         draw() {
             if (this.exploded) return;
+            
+            // Draw lead rope to ceiling anchor
+            if (this.isSwinging) {
+                ctx.save();
+                ctx.strokeStyle = '#8b5a2b';
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.currentSize/2, this.y + 4);
+                ctx.lineTo(this.swingAnchorX, this.swingAnchorY);
+                ctx.stroke();
+                ctx.restore();
+            }
+
             let s = this.currentSize; 
             if (this.isDying) {
                 let swellFactor = 1.0 + (45 - this.dyingTimer) / 45 * 0.6;
@@ -926,8 +942,53 @@
             if (currentState === state.menu) {
                 this.y = 200 + Math.cos(frames / 15) * 5; this.rotation = 0;
             } else {
-                // Player physics are immune to the game time slow down!
-                this.velocity += this.gravityActive; this.y += this.velocity;
+                if (this.transform === 'swing') {
+                    if (isInputActive) {
+                        if (!this.isSwinging) {
+                            this.isSwinging = true;
+                            this.swingAnchorX = this.x + 35;
+                            this.swingAnchorY = 0;
+                            let dx = this.x - this.swingAnchorX;
+                            let dy = this.y - this.swingAnchorY;
+                            this.swingR = Math.sqrt(dx*dx + dy*dy);
+                            playFlapSound();
+                        }
+                        
+                        let scrollSpeed = getGameSpeed() * 3;
+                        this.swingAnchorX -= scrollSpeed;
+                        this.velocity += this.gravityActive;
+                        
+                        let vx = this.x - this.swingAnchorX;
+                        let vy = this.y - this.swingAnchorY;
+                        let len = Math.sqrt(vx*vx + vy*vy);
+                        
+                        if (len > 0) {
+                            let nx = vx / len;
+                            let ny = vy / len;
+                            let tx = -ny;
+                            let ty = nx;
+                            
+                            let dot = scrollSpeed * tx + this.velocity * ty;
+                            let worldVy = dot * ty;
+                            
+                            this.x = this.swingAnchorX + nx * this.swingR;
+                            this.y = this.swingAnchorY + ny * this.swingR;
+                            this.velocity = worldVy;
+                            this.velocity -= 0.08 * getGameSpeed();
+                        }
+                    } else {
+                        this.isSwinging = false;
+                        this.x += (80 - this.x) * 0.05 * getGameSpeed();
+                        this.velocity += this.gravityActive;
+                        this.y += this.velocity;
+                    }
+                } else {
+                    this.isSwinging = false;
+                    this.x += (80 - this.x) * 0.05 * getGameSpeed();
+                    this.velocity += this.gravityActive;
+                    this.y += this.velocity;
+                }
+
                 if (this.y < 0) { this.y = 0; this.velocity = 0; }
                 if (this.y + this.currentSize >= ground.y) {
                     if (this.transform === 'slime') {
@@ -939,8 +1000,16 @@
                         this.y = ground.y - this.currentSize; this.triggerGameOver();
                     }
                 }
-                if (this.velocity >= this.jump) this.rotation = Math.min(Math.PI / 4, this.rotation + 0.05);
-                else this.rotation = -Math.PI / 8;
+                
+                if (this.isSwinging) {
+                    let dx = this.x - this.swingAnchorX;
+                    let dy = this.y - this.swingAnchorY;
+                    this.rotation = Math.atan2(dy, dx) - Math.PI/2;
+                } else if (this.velocity >= this.jump) {
+                    this.rotation = Math.min(Math.PI / 4, this.rotation + 0.05);
+                } else {
+                    this.rotation = -Math.PI / 8;
+                }
             }
         },
 
@@ -1026,6 +1095,7 @@
             this.isDying = false; this.dyingTimer = 0;
             this.invincibleTimer = 0; this.shrinkTimer = 0; this.transformTimer = 0; this.phaseTimer = 0; this.slowMoTimer = 0;
             this.transform = 'none'; this.currentSize = this.baseSize; this.gravityActive = this.gravityBase;
+            this.isSwinging = false; this.swingAnchorX = 0; this.swingAnchorY = 0; this.swingR = 0;
             transformAlert.classList.add('hidden');
         }
     };
@@ -1362,6 +1432,10 @@
                     ctx.fillStyle = '#33aaaa'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#115555'; ctx.beginPath(); ctx.arc(12, 12, 5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#66ffff'; ctx.fillRect(7, 7, 3, 3);
                 } else if (p.type === 'clock') {
                     ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(12, 12, 11, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#000000'; ctx.fillRect(11, 6, 2, 6); ctx.fillRect(11, 11, 5, 2); 
+                } else if (p.type === 'swing') {
+                    ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.arc(12, 12, 6, 0, Math.PI * 2); ctx.stroke();
+                    ctx.fillStyle = '#cccccc'; ctx.fillRect(6, 6, 3, 3);
                 }
                 ctx.restore();
             });
@@ -1406,6 +1480,8 @@
                     creeper.phaseTimer = 360; effects.addExplosion(cx, cy, ['#33aaaa', '#cc00ff'], 25, 0.8); effects.addText(cx, cy, "PHASE", "#66ffff");
                 } else if (p.type === 'clock') {
                     creeper.slowMoTimer = 480; effects.addExplosion(cx, cy, ['#ffd700', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SLOW MO", "#ffd700");
+                } else if (p.type === 'swing') {
+                    creeper.setTransform('swing', 'SWING MODE!', 'text-amber-600'); effects.addExplosion(cx, cy, ['#8b5a2b', '#ffffff'], 25, 0.8);
                 }
             }
         },
@@ -1651,12 +1727,13 @@
                     let lvlPoints = LEVELS[activeLevel].points;
                     let pType = lvlPoints.small; let pRoll = Math.random();
                     if (pRoll < 0.08) pType = 'tnt'; else if (pRoll < 0.16) pType = lvlPoints.large;
-                    else if (pRoll < 0.26) pType = 'slime'; else if (pRoll < 0.36) pType = 'elytra';
-                    else if (pRoll < 0.46) pType = 'blaze'; else if (pRoll < 0.54) pType = 'chorus';
-                    else if (pRoll < 0.62) pType = 'pearl'; else if (pRoll < 0.70) pType = 'clock';
+                    else if (pRoll < 0.25) pType = 'slime'; else if (pRoll < 0.34) pType = 'elytra';
+                    else if (pRoll < 0.43) pType = 'blaze'; else if (pRoll < 0.51) pType = 'chorus';
+                    else if (pRoll < 0.59) pType = 'pearl'; else if (pRoll < 0.67) pType = 'clock';
+                    else if (pRoll < 0.75) pType = 'swing';
                     else {
                         let appleMult = LEVELS[activeLevel].appleChanceMult || 1.0;
-                        let appleThreshold = 0.70 + (0.10 * appleMult);
+                        let appleThreshold = 0.75 + (0.08 * appleMult);
                         if (pRoll < Math.min(0.98, appleThreshold)) pType = 'apple';
                     }
 
@@ -2108,7 +2185,10 @@
 
         if ((e.code === 'Space' || e.code === 'ArrowUp') && currentState === state.game) {
             e.preventDefault();
-            handleInput();
+            if (!isInputActive) {
+                isInputActive = true;
+                handleInput();
+            }
             return;
         }
 
@@ -2130,9 +2210,34 @@
             }
         }
     });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            isInputActive = false;
+        }
+    });
+
     const container = document.getElementById('game-container');
-    container.addEventListener('mousedown', (e) => { if (!e.target.closest('.pointer-events-auto') && currentState === state.game) handleInput(); });
-    container.addEventListener('touchstart', (e) => { if (!e.target.closest('.pointer-events-auto') && currentState === state.game) { e.preventDefault(); handleInput(); } }, { passive: false });
+    container.addEventListener('mousedown', (e) => { 
+        if (!e.target.closest('.pointer-events-auto') && currentState === state.game) {
+            isInputActive = true;
+            handleInput(); 
+        }
+    });
+    window.addEventListener('mouseup', () => {
+        isInputActive = false;
+    });
+
+    container.addEventListener('touchstart', (e) => { 
+        if (!e.target.closest('.pointer-events-auto') && currentState === state.game) { 
+            e.preventDefault(); 
+            isInputActive = true;
+            handleInput(); 
+        } 
+    }, { passive: false });
+    window.addEventListener('touchend', () => {
+        isInputActive = false;
+    });
 
     function draw() {
         ctx.save(); 
