@@ -2276,7 +2276,7 @@
         score = 0; scoreDisplay.innerText = score; frames = 0; gameFrames = 0;
         goalDisplay.innerText = LEVELS[activeLevel].winScore;
         
-        if (activeLevel === 14) {
+        if (activeLevel === 14 && activeDifficulty !== 'simple') {
             scoreDisplay.parentElement.classList.add('hidden');
         } else {
             scoreDisplay.parentElement.classList.remove('hidden');
