@@ -873,6 +873,11 @@
                 ctx.fillStyle = '#4a4a5a'; ctx.fillRect(cx, cy + s*0.3, s, s*0.12); ctx.fillRect(cx + s*0.3, cy, s*0.12, s);
             }
             else if (this.transform === 'blaze') { ctx.fillStyle = '#ff8800'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#ffff00'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4); } 
+            else if (this.transform === 'swing') {
+                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(cx, cy, s, s); 
+                ctx.fillStyle = '#a06d3b'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4);
+                ctx.fillStyle = '#654321'; ctx.fillRect(cx+s*0.75, cy, s/4, s/4); ctx.fillRect(cx+s/4, cy+s*0.75, s/4, s/4);
+            }
             else {
                 ctx.fillStyle = '#10c010'; ctx.fillRect(cx, cy, s, s); ctx.fillStyle = '#14d814'; ctx.fillRect(cx, cy, s/4, s/4); ctx.fillRect(cx+s/2, cy+s/4, s/4, s/4);
                 ctx.fillStyle = '#0b8e0b'; ctx.fillRect(cx+s*0.75, cy, s/4, s/4); ctx.fillRect(cx+s/4, cy+s*0.75, s/4, s/4);
