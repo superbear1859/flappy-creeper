@@ -81,10 +81,10 @@
             <div class="mt-4 flex flex-col items-center gap-1.5 pointer-events-auto w-full max-w-sm">
                 <span class="text-white text-[9px] pixel-text-shadow tracking-widest text-yellow-400">DIFFICULTY</span>
                 <div class="flex gap-1 w-full justify-around">
+                    <button id="diff-simple" onclick="setDifficulty('simple')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">SIMPLE</button>
                     <button id="diff-easy" onclick="setDifficulty('easy')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">EASY</button>
                     <button id="diff-normal" onclick="setDifficulty('normal')" class="flex-1 py-1.5 bg-blue-700 border-2 border-blue-500 hover:border-blue-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">NORMAL</button>
                     <button id="diff-hard" onclick="setDifficulty('hard')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">HARD</button>
-                    <button id="diff-simple" onclick="setDifficulty('simple')" class="flex-1 py-1.5 bg-gray-800 border-2 border-gray-600 hover:border-gray-400 text-white font-bold text-[7px] pixel-text-shadow rounded transition-transform active:scale-95 cursor-pointer">SIMPLE</button>
                 </div>
             </div>
             
@@ -1839,7 +1839,7 @@
                 this.items.push(newPillar);
 
                 let spawnPowerupChance = LEVELS[activeLevel].powerupChance || 0.35;
-                let spawnPowerup = Math.random() < spawnPowerupChance; 
+                let spawnPowerup = activeDifficulty === 'simple' ? false : (Math.random() < spawnPowerupChance); 
                 let enemyChance = 0.40;
                 if (activeDifficulty === 'easy') enemyChance = 0.20;
                 else if (activeDifficulty === 'hard') enemyChance = 0.55;
@@ -1849,19 +1849,15 @@
                 if (spawnPowerup) {
                     let lvlPoints = LEVELS[activeLevel].points;
                     let pType = lvlPoints.small; let pRoll = Math.random();
-                    if (activeDifficulty === 'simple') {
-                        pType = Math.random() < 0.25 ? lvlPoints.large : lvlPoints.small;
-                    } else {
-                        if (pRoll < 0.08) pType = 'tnt'; else if (pRoll < 0.16) pType = lvlPoints.large;
-                        else if (pRoll < 0.25) pType = 'slime'; else if (pRoll < 0.34) pType = 'elytra';
-                        else if (pRoll < 0.43) pType = 'blaze'; else if (pRoll < 0.51) pType = 'chorus';
-                        else if (pRoll < 0.59) pType = 'pearl'; else if (pRoll < 0.67) pType = 'clock';
-                        else if (pRoll < 0.75) pType = 'swing';
-                        else {
-                            let appleMult = LEVELS[activeLevel].appleChanceMult || 1.0;
-                            let appleThreshold = 0.75 + (0.08 * appleMult);
-                            if (pRoll < Math.min(0.98, appleThreshold)) pType = 'apple';
-                        }
+                    if (pRoll < 0.08) pType = 'tnt'; else if (pRoll < 0.16) pType = lvlPoints.large;
+                    else if (pRoll < 0.25) pType = 'slime'; else if (pRoll < 0.34) pType = 'elytra';
+                    else if (pRoll < 0.43) pType = 'blaze'; else if (pRoll < 0.51) pType = 'chorus';
+                    else if (pRoll < 0.59) pType = 'pearl'; else if (pRoll < 0.67) pType = 'clock';
+                    else if (pRoll < 0.75) pType = 'swing';
+                    else {
+                        let appleMult = LEVELS[activeLevel].appleChanceMult || 1.0;
+                        let appleThreshold = 0.75 + (0.08 * appleMult);
+                        if (pRoll < Math.min(0.98, appleThreshold)) pType = 'apple';
                     }
 
                     powerups.items.push({ x: spawnX + this.width/2 - powerups.size/2, y: topPos + currentGap/2 - powerups.size/2, type: pType, collected: false });
