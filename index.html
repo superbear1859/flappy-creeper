@@ -1087,7 +1087,13 @@
         },
 
         flap() {
-            if (this.isDying || this.exploded) return;
+            if (this.isDying || this.exploded) {
+                if (currentState === state.game) {
+                    playFlapSound();
+                    effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize, ['#ffffff', '#cccccc'], 3, 0.2, 0.05, false);
+                }
+                return;
+            }
             this.velocity = -this.jump * (this.transform === 'elytra' ? 0.85 : 1);
             if (currentState === state.game) {
                 playFlapSound();
