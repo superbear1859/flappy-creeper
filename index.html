@@ -1514,8 +1514,6 @@
                             // Phase
                         } else if (creeper.transform === 'slime' && creeper.velocity > 0 && (hb.bottom - creeper.velocity * 1.2 <= e.y + e.h * 0.5)) {
                             e.destroyed = true; addScore(5);
-                            creeper.y = e.y - creeper.currentSize;
-                            creeper.velocity = -creeper.jump * 1.4;
                             triggerShake(8, 4);
                             playSlimeSquishSound();
                             effects.addExplosion(e.x + e.w/2, e.y + e.h/2, ['#55ff55', '#aaffaa', '#22aa22'], 20, 1.0);
