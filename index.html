@@ -14,6 +14,7 @@
         .pixel-text-shadow-sm { text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
         .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         @keyframes flashText { 0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); } 50% { opacity: 0.8; transform: scale(1.15) rotate(2deg); } }
+        @keyframes heartPulse { 0% { transform: scale(1.5); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         .status-alert { animation: flashText 0.4s infinite; }
         .pointer-events-auto { pointer-events: auto; }
         
@@ -125,6 +126,8 @@
                 <div id="scoreDisplay" class="text-5xl text-white pixel-text-shadow transition-transform">0</div>
                 <div class="text-xl text-gray-300 pixel-text-shadow">/ <span id="goalDisplay">20</span></div>
             </div>
+            <!-- Boss Level Hearts -->
+            <div id="bossLivesContainer" class="mt-2 flex gap-1 justify-center hidden"></div>
             <div id="statusContainer" class="mt-4 flex flex-col items-center gap-1">
                 <div id="transformAlert" class="text-white text-sm pixel-text-shadow status-alert hidden">MODE ACTIVE</div>
             </div>
@@ -553,6 +556,20 @@
         }
     }
 
+    function updateBossLivesUI() {
+        const container = document.getElementById('bossLivesContainer');
+        if (!container) return;
+        if (currentState === state.game && activeLevel === 14 && typeof creeper !== 'undefined') {
+            container.classList.remove('hidden');
+            container.innerHTML = '';
+            for (let i = 0; i < creeper.lives; i++) {
+                container.innerHTML += `<span class="text-red-500 text-3xl pixel-text-shadow select-none mx-0.5" style="text-shadow: 2.5px 2.5px 0px #000; display: inline-block; animation: heartPulse 0.4s ease-out;">❤</span>`;
+            }
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
     switchTab(Math.floor(unlockedLevel / 5));
     updateDifficultyUI();
 
@@ -813,6 +830,7 @@
         baseSize: 32, currentSize: 32, x: 80, y: 200, velocity: 0, gravityBase: 0.25, gravityActive: 0.25, jump: 5.5, rotation: 0, exploded: false,
         invincibleTimer: 0, shrinkTimer: 0, phaseTimer: 0, slowMoTimer: 0, transformTimer: 0, transform: 'none', isDying: false, dyingTimer: 0,
         isSwinging: false, swingAnchorX: 0, swingAnchorY: 0, swingR: 0,
+        lives: 3, maxLives: 3,
 
         draw() {
             if (this.exploded) return;
@@ -940,6 +958,10 @@
                     ctx.fillRect(rodX - 2, rodY - 6, 4, 12);
                 }
             }
+            if (activeLevel === 14 && this.invincibleTimer > 0 && Math.floor(frames / 4) % 2 === 0) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.45)';
+                ctx.fillRect(cx - 2, cy - 2, s + 4, s + 4);
+            }
             if (this.isDying) {
                 let flashAlphaVal = Math.floor((45 - this.dyingTimer) / 4) % 2 === 0 ? 0.75 : 0.15;
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashAlphaVal})`;
@@ -1044,7 +1066,7 @@
                         effects.addExplosion(this.x + this.currentSize/2, ground.y, ['#55ff55', '#aaffaa'], 15, 0.8);
                         effects.addText(this.x + this.currentSize/2, this.y - 10, "BOING!", "#55ff55");
                     } else {
-                        this.y = ground.y - this.currentSize; this.triggerGameOver();
+                        this.y = ground.y - this.currentSize; this.takeDamage();
                     }
                 }
                 
@@ -1125,6 +1147,32 @@
         },
 
         triggerGameOver() {
+            this.takeDamage();
+        },
+
+        takeDamage() {
+            if (this.invincibleTimer > 0 || this.isDying || this.exploded) return;
+            
+            if (activeLevel === 14) {
+                this.lives--;
+                updateBossLivesUI();
+                triggerShake(12, 8);
+                playHurtSound();
+                
+                effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize/2, ['#ff0000', '#ff8888', '#ffffff'], 15, 0.7);
+                effects.addText(this.x + this.currentSize/2, this.y - 10, "OOF!", "#ff3333");
+                
+                if (this.lives > 0) {
+                    this.invincibleTimer = 90;
+                    this.velocity = -this.jump * 0.8;
+                    
+                    if (this.y + this.currentSize >= ground.y) {
+                        this.y = ground.y - this.currentSize - 30;
+                    }
+                    return;
+                }
+            }
+            
             this.startDying();
         },
 
@@ -1143,7 +1191,9 @@
             this.invincibleTimer = 0; this.shrinkTimer = 0; this.transformTimer = 0; this.phaseTimer = 0; this.slowMoTimer = 0;
             this.transform = 'none'; this.currentSize = this.baseSize; this.gravityActive = this.gravityBase;
             this.isSwinging = false; this.swingAnchorX = 0; this.swingAnchorY = 0; this.swingR = 0;
+            this.lives = 3; this.maxLives = 3;
             transformAlert.classList.add('hidden');
+            updateBossLivesUI();
         }
     };
 
@@ -1253,6 +1303,17 @@
             });
             if (hasCrystal && gameFrames % 10 < 0.1 * speed) {
                 this.health = Math.min(this.maxHealth, this.health + 0.2);
+            }
+
+            if (this.health > 0 && !creeper.exploded && !creeper.isDying) {
+                let hb = creeper.getHitbox();
+                if (hb.right > this.x && hb.left < this.x + this.w && hb.bottom > this.y && hb.top < this.y + this.h) {
+                    if (creeper.phaseTimer > 0) {
+                    } else if (creeper.invincibleTimer > 0) {
+                    } else {
+                        creeper.takeDamage();
+                    }
+                }
             }
         },
 
@@ -1404,7 +1465,9 @@
                             addScore(1);
                             continue;
                         } else {
-                            creeper.triggerGameOver();
+                            creeper.takeDamage();
+                            this.items.splice(i, 1);
+                            continue;
                         }
                     }
                 }
@@ -1646,7 +1709,7 @@
                             let colors = e.type === 'bat' ? ['#3a2b22', '#221814'] : e.type === 'fireball' ? ['#ff8800', '#ff0000'] : e.type === 'phantom' ? ['#171738', '#44ff44'] : e.type === 'vex' ? ['#aaccff', '#ff0000'] : e.type === 'shulker' ? ['#eebdff', '#ffffff'] : ['#333333', '#111111'];
                             effects.addExplosion(e.x + e.w/2, e.y + e.h/2, colors, 25, 1.2); effects.addText(e.x + e.w/2, e.y, "SMASH!", "#FFD700");
                         } else {
-                            creeper.triggerGameOver();
+                            creeper.takeDamage();
                         }
                     }
                 }
@@ -1811,7 +1874,7 @@
                                 let lvl = LEVELS[activeLevel].pillar;
                                 effects.addExplosion(p.x + this.width/2, creeper.y + creeper.currentSize/2, [lvl.top, lvl.side, '#4c9f38'], 35, 1.2);
                                 effects.addText(p.x + this.width/2, creeper.y, "SMASH!", "#FFD700");
-                            } else { creeper.triggerGameOver(); }
+                            } else { creeper.takeDamage(); }
                         }
                     }
                 }
@@ -2028,6 +2091,24 @@
         gain.gain.linearRampToValueAtTime(0.001, now + 0.12);
         osc.start(now);
         osc.stop(now + 0.12);
+    }
+
+    function playHurtSound() {
+        if (!audioCtx) return;
+        try {
+            let now = audioCtx.currentTime;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(110, now);
+            osc.frequency.exponentialRampToValueAtTime(55, now + 0.14);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.14);
+            osc.start(now);
+            osc.stop(now + 0.14);
+        } catch(e) {}
     }
 
     function playPowerupSound() {
@@ -2339,6 +2420,7 @@
 
             ground.update(); creeper.update(); effects.update();
             updateSoundtrack();
+            updateBossLivesUI();
         } else {
             gameFrames++;
             bg.update(); ground.update(); creeper.update(); effects.update();
