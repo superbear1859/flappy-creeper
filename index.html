@@ -529,6 +529,12 @@
         unlockedLevel = 0;
         localStorage.setItem('flappyCreeperUnlocked2', 0);
         localStorage.removeItem('enderDragonBeaten');
+        localStorage.removeItem('flappyCreeperUnlockedSlime');
+        localStorage.removeItem('flappyCreeperUnlockedElytra');
+        localStorage.removeItem('flappyCreeperUnlockedBlaze');
+        localStorage.removeItem('flappyCreeperUnlockedPhase');
+        localStorage.removeItem('flappyCreeperUnlockedSlow');
+        localStorage.removeItem('flappyCreeperUnlockedSwing');
         updateMenuLocks();
         switchTab(0);
         cancelResetProgress();
@@ -1709,22 +1715,22 @@
                     this.triggerTNT(cx, cy);
                 } else if (p.type === 'slime') {
                     creeper.setTransform('slime', 'SLIME BOUNCE!', 'text-green-400'); effects.addExplosion(cx, cy, ['#55ff55', '#aaffaa'], 25, 0.8);
-                    localStorage.setItem('flappyCreeperUnlockedSlime', 'true');
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSlime', 'true');
                 } else if (p.type === 'elytra') {
                     creeper.setTransform('elytra', 'ELYTRA GLIDE!', 'text-gray-300'); effects.addExplosion(cx, cy, ['#777788', '#ffffff'], 25, 0.8);
-                    localStorage.setItem('flappyCreeperUnlockedElytra', 'true');
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedElytra', 'true');
                 } else if (p.type === 'blaze') {
                     creeper.setTransform('blaze', 'BLAZE FIRE!', 'text-orange-400'); effects.addExplosion(cx, cy, ['#ffaa00', '#ff0000'], 30, 1.0);
-                    localStorage.setItem('flappyCreeperUnlockedBlaze', 'true');
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedBlaze', 'true');
                 } else if (p.type === 'pearl') {
                     creeper.phaseTimer = 360; effects.addExplosion(cx, cy, ['#33aaaa', '#cc00ff'], 25, 0.8); effects.addText(cx, cy, "PHASE", "#66ffff");
-                    localStorage.setItem('flappyCreeperUnlockedPhase', 'true');
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedPhase', 'true');
                 } else if (p.type === 'clock') {
                     creeper.slowMoTimer = 480; effects.addExplosion(cx, cy, ['#ffd700', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SLOW MO", "#ffd700");
-                    localStorage.setItem('flappyCreeperUnlockedSlow', 'true');
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSlow', 'true');
                 } else if (p.type === 'swing') {
                     creeper.setTransform('swing', 'SWING MODE!', 'text-amber-600'); effects.addExplosion(cx, cy, ['#8b5a2b', '#ffffff'], 25, 0.8);
-                    localStorage.setItem('flappyCreeperUnlockedSwing', 'true');
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSwing', 'true');
                 }
             }
         },
