@@ -692,11 +692,17 @@
         if (activeDifficulty === 'easy') speed *= 0.75;
         else if (activeDifficulty === 'hard') speed *= 1.25;
         
-        if (creeper.slowMoTimer > 0) speed *= 0.45; 
+        if (typeof creeper !== 'undefined') {
+            if (creeper.slowMoTimer > 0) speed *= 0.45;
+            if (creeper.swiftnessTimer > 0) speed *= 1.45;
+        }
         return speed;
     }
 
     function addScore(amount) {
+        if (typeof creeper !== 'undefined' && creeper.swiftnessTimer > 0) {
+            amount *= 2;
+        }
         score += amount;
         scoreDisplay.innerText = score;
         scoreDisplay.style.transform = 'scale(1.5)';
@@ -939,6 +945,7 @@
         invincibleTimer: 0, shrinkTimer: 0, phaseTimer: 0, slowMoTimer: 0, transformTimer: 0, transform: 'none', isDying: false, dyingTimer: 0,
         isSwinging: false, swingAnchorX: 0, swingAnchorY: 0, swingR: 0,
         lives: 3, maxLives: 3,
+        swiftnessTimer: 0, hasTotem: false, magnetTimer: 0,
 
         draw() {
             if (this.exploded) return;
@@ -1076,6 +1083,31 @@
                 ctx.fillRect(cx - 2, cy - 2, s + 4, s + 4);
             }
             ctx.restore();
+
+            if (this.magnetTimer > 0) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(170, 85, 255, 0.4)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 6]);
+                ctx.beginPath();
+                ctx.arc(this.x + this.currentSize/2, this.y + this.currentSize/2, 150, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+            if (this.hasTotem) {
+                ctx.save();
+                ctx.translate(this.x + this.currentSize/2 - 6, this.y - 18 + Math.sin(frames / 10) * 3);
+                // Gold wings/body
+                ctx.fillStyle = '#ffcc00';
+                ctx.fillRect(2, 0, 8, 4);  // head
+                ctx.fillRect(0, 4, 12, 4); // wings
+                ctx.fillRect(4, 8, 4, 6);  // body
+                // Green center/eyes
+                ctx.fillStyle = '#55ff55';
+                ctx.fillRect(2, 5, 2, 2);
+                ctx.fillRect(8, 5, 2, 2);
+                ctx.restore();
+            }
         },
 
         update() {
@@ -1097,9 +1129,15 @@
                 return;
             }
 
+            if (this.swiftnessTimer > 0 && frames % 3 === 0) {
+                effects.addExplosion(this.x + this.currentSize / 2, this.y + this.currentSize / 2, ['#00d2ff', '#00f6ff', '#ffffff'], 1, 0.4, 0.05, true);
+            }
+
             if (this.invincibleTimer > 0) this.invincibleTimer--;
             if (this.phaseTimer > 0) this.phaseTimer--;
             if (this.slowMoTimer > 0) this.slowMoTimer--;
+            if (this.swiftnessTimer > 0) this.swiftnessTimer--;
+            if (this.magnetTimer > 0) this.magnetTimer--;
             
             if (this.shrinkTimer > 0) {
                 this.shrinkTimer--; this.currentSize = 16; 
@@ -1284,6 +1322,46 @@
         takeDamage() {
             if (this.invincibleTimer > 0 || this.isDying || this.exploded) return;
             
+            if (this.hasTotem) {
+                this.hasTotem = false;
+                this.invincibleTimer = 180;
+                this.velocity = -this.jump * 0.9;
+                if (this.y + this.currentSize >= ground.y) {
+                    this.y = ground.y - this.currentSize - 40;
+                }
+                
+                triggerShake(20, 10);
+                
+                if (audioCtx) {
+                    let now = audioCtx.currentTime;
+                    let freqs = [349.23, 440.00, 523.25, 659.25, 880.00];
+                    freqs.forEach((freq, index) => {
+                        let osc = audioCtx.createOscillator();
+                        let gainNode = audioCtx.createGain();
+                        osc.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + index * 0.08);
+                        gainNode.gain.setValueAtTime(0.2, now + index * 0.08);
+                        gainNode.gain.linearRampToValueAtTime(0.001, now + index * 0.08 + 0.3);
+                        osc.start(now + index * 0.08);
+                        osc.stop(now + index * 0.08 + 0.35);
+                    });
+                }
+                
+                pillars.items.forEach(pil => {
+                    if (pil.x > -pillars.width && pil.x < LOGICAL_WIDTH) {
+                        pil.destroyed = true; addScore(1);
+                        let lvl = LEVELS[activeLevel].pillar;
+                        effects.addExplosion(pil.x + pillars.width/2, this.y, [lvl.top, lvl.side, '#ffd700'], 20, 0.8);
+                    }
+                });
+                
+                effects.addExplosion(this.x + this.currentSize/2, this.y + this.currentSize/2, ['#ffd700', '#55ff55', '#ffffff'], 40, 1.5, 0.03, true);
+                effects.addText(this.x + this.currentSize/2, this.y - 20, "TOTEM POPPED!", "#ffd700");
+                return;
+            }
+            
             if (activeLevel === 14 && activeDifficulty !== 'simple') {
                 this.lives--;
                 updateBossLivesUI();
@@ -1320,6 +1398,7 @@
             this.x = 80; this.y = 200; this.velocity = 0; this.rotation = 0; this.exploded = false;
             this.isDying = false; this.dyingTimer = 0;
             this.invincibleTimer = 0; this.shrinkTimer = 0; this.transformTimer = 0; this.phaseTimer = 0; this.slowMoTimer = 0;
+            this.swiftnessTimer = 0; this.hasTotem = false; this.magnetTimer = 0;
             this.transform = 'none'; this.currentSize = this.baseSize; this.gravityActive = this.gravityBase;
             this.isSwinging = false; this.swingAnchorX = 0; this.swingAnchorY = 0; this.swingR = 0;
             this.lives = (activeLevel === 14 && activeDifficulty !== 'simple') ? 3 : 1; this.maxLives = this.lives;
@@ -1679,6 +1758,17 @@
                     ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 3;
                     ctx.beginPath(); ctx.arc(12, 12, 6, 0, Math.PI * 2); ctx.stroke();
                     ctx.fillStyle = '#cccccc'; ctx.fillRect(6, 6, 3, 3);
+                } else if (p.type === 'swiftness') {
+                    ctx.fillStyle = '#00ffff'; ctx.fillRect(8, 8, 8, 12); ctx.fillRect(6, 10, 12, 10);
+                    ctx.fillStyle = '#5c3f29'; ctx.fillRect(10, 4, 4, 4);
+                    ctx.fillStyle = '#ffffff'; ctx.fillRect(9, 11, 2, 4);
+                } else if (p.type === 'totem') {
+                    ctx.fillStyle = '#ffcc00'; ctx.fillRect(8, 2, 8, 6); ctx.fillRect(4, 8, 16, 4); ctx.fillRect(9, 12, 6, 10);
+                    ctx.fillStyle = '#55ff55'; ctx.fillRect(8, 9, 2, 2); ctx.fillRect(14, 9, 2, 2);
+                } else if (p.type === 'magnet') {
+                    ctx.strokeStyle = '#ff2222'; ctx.lineWidth = 4.5; ctx.lineCap = 'square';
+                    ctx.beginPath(); ctx.arc(12, 10, 6, Math.PI, 0, true); ctx.stroke();
+                    ctx.fillStyle = '#dddddd'; ctx.fillRect(4, 10, 5, 3); ctx.fillRect(15, 10, 5, 3);
                 }
                 ctx.restore();
             });
@@ -1691,6 +1781,20 @@
                 p.x -= this.dx * speed;
                 if (!p.collected && !creeper.exploded) {
                     let floatY = p.y + Math.sin((gameFrames + p.x) / 15) * 5;
+                    
+                    if (creeper.magnetTimer > 0) {
+                        let targetX = creeper.x + creeper.currentSize / 2 - 12;
+                        let targetY = creeper.y + creeper.currentSize / 2 - 12;
+                        let dx = targetX - p.x;
+                        let dy = targetY - floatY;
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist < 150) {
+                            p.x += (dx / dist) * 4.5 * Math.max(1, speed);
+                            p.y += (dy / dist) * 4.5 * Math.max(1, speed);
+                            floatY = p.y + Math.sin((gameFrames + p.x) / 15) * 5;
+                        }
+                    }
+                    
                     let hb = creeper.getHitbox();
                     if (hb.right > p.x && hb.left < p.x + this.size && hb.bottom > floatY && hb.top < floatY + this.size) this.collect(p, floatY);
                 }
@@ -1731,6 +1835,12 @@
                 } else if (p.type === 'swing') {
                     creeper.setTransform('swing', 'SWING MODE!', 'text-amber-600'); effects.addExplosion(cx, cy, ['#8b5a2b', '#ffffff'], 25, 0.8);
                     if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSwing', 'true');
+                } else if (p.type === 'swiftness') {
+                    creeper.swiftnessTimer = 360; effects.addExplosion(cx, cy, ['#00ffff', '#00d2ff', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SPEED BOOST!", "#00ffff");
+                } else if (p.type === 'totem') {
+                    creeper.hasTotem = true; effects.addExplosion(cx, cy, ['#ffd700', '#55ff55', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "TOTEM READY", "#ffd700");
+                } else if (p.type === 'magnet') {
+                    creeper.magnetTimer = 480; effects.addExplosion(cx, cy, ['#aa55ff', '#ddbaff', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "MAGNET ACTIVE", "#b280ff");
                 }
             }
         },
@@ -1992,14 +2102,15 @@
                 if (spawnPowerup) {
                     let lvlPoints = LEVELS[activeLevel].points;
                     let pType = lvlPoints.small; let pRoll = Math.random();
-                    if (pRoll < 0.08) pType = 'tnt'; else if (pRoll < 0.16) pType = lvlPoints.large;
-                    else if (pRoll < 0.25) pType = 'slime'; else if (pRoll < 0.34) pType = 'elytra';
-                    else if (pRoll < 0.43) pType = 'blaze'; else if (pRoll < 0.51) pType = 'chorus';
-                    else if (pRoll < 0.59) pType = 'pearl'; else if (pRoll < 0.67) pType = 'clock';
-                    else if (pRoll < 0.75) pType = 'swing';
+                    if (pRoll < 0.08) pType = 'tnt'; else if (pRoll < 0.15) pType = lvlPoints.large;
+                    else if (pRoll < 0.22) pType = 'slime'; else if (pRoll < 0.29) pType = 'elytra';
+                    else if (pRoll < 0.36) pType = 'blaze'; else if (pRoll < 0.43) pType = 'chorus';
+                    else if (pRoll < 0.50) pType = 'pearl'; else if (pRoll < 0.57) pType = 'clock';
+                    else if (pRoll < 0.64) pType = 'swing'; else if (pRoll < 0.71) pType = 'swiftness';
+                    else if (pRoll < 0.78) pType = 'totem'; else if (pRoll < 0.85) pType = 'magnet';
                     else {
                         let appleMult = LEVELS[activeLevel].appleChanceMult || 1.0;
-                        let appleThreshold = 0.75 + (0.08 * appleMult);
+                        let appleThreshold = 0.85 + (0.05 * appleMult);
                         if (pRoll < Math.min(0.98, appleThreshold)) pType = 'apple';
                     }
 
