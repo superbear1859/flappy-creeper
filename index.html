@@ -482,6 +482,24 @@
             enemies: ['skeleton'],
             points: { small: 'diamond', large: 'emerald' },
             speedMult: 1.05, pillarGap: 180, spawnDist: 215, powerupChance: 0.0
+        },
+        {
+            name: "Swiftness Race", winScore: 45,
+            bg: 'plains', cloudType: 'fluffy',
+            ground: { top: '#55a138', side: '#4c9f38', detail: '#3b8b27' },
+            pillar: { top: '#1c1c1c', side: '#111111', detail: '#050505' },
+            enemies: ['zombie'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.25, pillarGap: 175, spawnDist: 195, powerupChance: 0.0
+        },
+        {
+            name: "Magnetic Field", winScore: 40,
+            bg: 'void_islands', cloudType: 'void',
+            ground: { top: '#d4e157', side: '#9e9d24', detail: '#4a148c' },
+            pillar: { top: '#2c2c2c', side: '#1a1a1a', detail: '#0f0f0f' },
+            enemies: ['vex'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.15, pillarGap: 170, spawnDist: 185, powerupChance: 0.0
         }
     ];
     let activeLevel = 0;
@@ -535,6 +553,8 @@
         localStorage.removeItem('flappyCreeperUnlockedPhase');
         localStorage.removeItem('flappyCreeperUnlockedSlow');
         localStorage.removeItem('flappyCreeperUnlockedSwing');
+        localStorage.removeItem('flappyCreeperUnlockedSwiftness');
+        localStorage.removeItem('flappyCreeperUnlockedMagnet');
         updateMenuLocks();
         switchTab(0);
         cancelResetProgress();
@@ -552,7 +572,7 @@
         
         const levelIndices = [];
         if (activeTab === 3) {
-            for (let i = 18; i <= 23; i++) {
+            for (let i = 18; i <= 25; i++) {
                 levelIndices.push(i);
             }
         } else {
@@ -576,8 +596,8 @@
             const lvl = LEVELS[i];
             
             let isUnlocked = false;
-            if (i >= 18 && i <= 23) {
-                const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing'];
+            if (i >= 18 && i <= 25) {
+                const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing', 'flappyCreeperUnlockedSwiftness', 'flappyCreeperUnlockedMagnet'];
                 isUnlocked = localStorage.getItem(keys[i - 18]) === 'true';
             } else if (i >= 15 && i <= 17) {
                 isUnlocked = true;
@@ -612,8 +632,8 @@
             if (i === 14 && activeDifficulty !== 'simple') titleText += " [BOSS FIGHT]";
             
             let goalText = "";
-            if (i >= 18 && i <= 23) {
-                const unlockItems = ['Slime', 'Elytra', 'Blaze Rod', 'Ender Pearl', 'Clock', 'Lead'];
+            if (i >= 18 && i <= 25) {
+                const unlockItems = ['Slime', 'Elytra', 'Blaze Rod', 'Ender Pearl', 'Clock', 'Lead', 'Swiftness Potion', 'Magnet'];
                 goalText = isUnlocked ? `Goal: ${lvl.winScore} Points` : `Unlock: Collect ${unlockItems[i - 18]} in game`;
             } else if (i === 14 && activeDifficulty !== 'simple') {
                 goalText = isUnlocked ? "Goal: Defeat Ender Dragon" : "Goal: Defeat Ender Dragon (Locked)";
@@ -1163,6 +1183,10 @@
             } else if (activeLevel === 23) {
                 this.transform = 'swing';
                 this.transformTimer = 999999;
+            } else if (activeLevel === 24) {
+                this.swiftnessTimer = 999999;
+            } else if (activeLevel === 25) {
+                this.magnetTimer = 999999;
             } else if (this.transformTimer > 0) {
                 if (--this.transformTimer === 0) { this.transform = 'none'; transformAlert.classList.add('hidden'); }
             } else { this.transform = 'none'; }
@@ -2487,8 +2511,8 @@
             isLevelPlayable = unlockedLevel >= 10;
         } else if (levelIndex === 17) {
             isLevelPlayable = localStorage.getItem('enderDragonBeaten') === 'true';
-        } else if (levelIndex >= 18 && levelIndex <= 23) {
-            const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing'];
+        } else if (levelIndex >= 18 && levelIndex <= 25) {
+            const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing', 'flappyCreeperUnlockedSwiftness', 'flappyCreeperUnlockedMagnet'];
             isLevelPlayable = localStorage.getItem(keys[levelIndex - 18]) === 'true';
         }
 
