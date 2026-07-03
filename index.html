@@ -1087,6 +1087,7 @@
         },
 
         flap() {
+            if (this.isDying || this.exploded) return;
             this.velocity = -this.jump * (this.transform === 'elytra' ? 0.85 : 1);
             if (currentState === state.game) {
                 playFlapSound();
@@ -1741,7 +1742,7 @@
     // OBSTACLES (PILLARS) & SPAWNER
     // ----------------------------------------------------
     const pillars = {
-        items: [], width: 60, gap: 230, dx: 3, distanceCounter: 0, spawnDistance: 240,
+        items: [], width: 60, gap: 230, dx: 3, distanceCounter: 0, spawnDistance: 240, prevTopPos: 200,
 
         draw() {
             this.items.forEach(p => {
@@ -1817,12 +1818,22 @@
             else if (activeDifficulty === 'hard') currentGap -= 20;
             
             let currentSpawnDist = LEVELS[activeLevel].spawnDist || 240;
+            if (activeDifficulty === 'simple') currentSpawnDist += 50;
 
             this.distanceCounter += this.dx * speed;
             if (this.distanceCounter >= currentSpawnDist) {
                 this.distanceCounter = 0;
                 let maxPos = ground.y - currentGap - 40; let minPos = 40;
-                let topPos = Math.floor(Math.random() * (maxPos - minPos + 1) + minPos);
+                
+                let topPos;
+                if (activeDifficulty === 'simple') {
+                    let maxDelta = 60;
+                    let nextTop = Math.floor(Math.random() * (maxDelta * 2 + 1) - maxDelta) + this.prevTopPos;
+                    topPos = Math.max(minPos, Math.min(maxPos, nextTop));
+                } else {
+                    topPos = Math.floor(Math.random() * (maxPos - minPos + 1) + minPos);
+                }
+                this.prevTopPos = topPos;
                 let spawnX = LOGICAL_WIDTH;
                 
                 let newPillar = { x: spawnX, top: topPos, bottom: topPos + currentGap, passed: false, destroyed: false };
@@ -1889,7 +1900,7 @@
                 if (p.x + this.width < 0) this.items.shift();
             });
         },
-        reset() { this.items = []; this.distanceCounter = 0; }
+        reset() { this.items = []; this.distanceCounter = 0; this.prevTopPos = 200; }
     };
 
     // ----------------------------------------------------
