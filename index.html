@@ -2069,25 +2069,47 @@
 
         drawBlock(x, y, w, h, isTop) {
             let colors = LEVELS[activeLevel].pillar;
-            ctx.fillStyle = colors.side; ctx.fillRect(x, y, w, h);
-            ctx.fillStyle = colors.detail;
-            if (activeLevel === 16) {
-                for (let i = 0; i < h; i += 10) {
+            
+            if (activeLevel === 13) {
+                ctx.fillStyle = colors.side; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = colors.detail;
+                for (let i = 0; i < h; i += 12) {
                     ctx.fillRect(x, y + i, w, 2);
-                    let offset = (Math.floor(i / 10) % 2 === 0 ? 0 : 10);
-                    for (let j = offset; j < w; j += 20) {
-                        ctx.fillRect(x + j, y + i, 2, 10);
+                    let offset = (Math.floor(i / 12) % 2 === 0 ? 0 : 15);
+                    for (let j = offset; j < w; j += 30) {
+                        ctx.fillRect(x + j, y + i, 2, 12);
                     }
                 }
+                ctx.fillStyle = colors.top;
+                let capY = isTop ? y + h - 18 : y;
+                ctx.fillRect(x, capY, w, 18);
+                ctx.fillStyle = '#6a2c80';
+                ctx.fillRect(x, isTop ? y + h - 18 : y + 16, w, 2);
+                ctx.fillRect(x, isTop ? y + h - 10 : y + 8, w, 2);
+                ctx.fillRect(x + 15, isTop ? y + h - 18 : y, 2, 8);
+                ctx.fillRect(x + 45, isTop ? y + h - 18 : y, 2, 8);
+                ctx.fillRect(x + 30, isTop ? y + h - 10 : y + 8, 2, 8);
             } else {
-                for(let i=0; i<h; i+=20) {
-                    for(let j=0; j<w; j+=20) {
-                        if ((i+j)%60 === 0) ctx.fillRect(x+j, y+i, 10, 10);
+                ctx.fillStyle = colors.side; ctx.fillRect(x, y, w, h);
+                ctx.fillStyle = colors.detail;
+                if (activeLevel === 16) {
+                    for (let i = 0; i < h; i += 10) {
+                        ctx.fillRect(x, y + i, w, 2);
+                        let offset = (Math.floor(i / 10) % 2 === 0 ? 0 : 10);
+                        for (let j = offset; j < w; j += 20) {
+                            ctx.fillRect(x + j, y + i, 2, 10);
+                        }
+                    }
+                } else {
+                    for(let i=0; i<h; i+=20) {
+                        for(let j=0; j<w; j+=20) {
+                            if ((i+j)%60 === 0) ctx.fillRect(x+j, y+i, 10, 10);
+                        }
                     }
                 }
+                ctx.fillStyle = colors.top;
+                if (isTop) ctx.fillRect(x, y + h - 15, w, 15); else ctx.fillRect(x, y, w, 15);
             }
-            ctx.fillStyle = colors.top;
-            if (isTop) ctx.fillRect(x, y + h - 15, w, 15); else ctx.fillRect(x, y, w, 15);
         },
 
         update() {
