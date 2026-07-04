@@ -70,7 +70,8 @@
                 <button id="tab0" class="tab-btn active border-b-4 border-green-500 text-green-400 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(0)">OVERWORLD</button>
                 <button id="tab1" class="tab-btn border-b-4 border-transparent text-gray-500 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(1)">NETHER</button>
                 <button id="tab2" class="tab-btn border-b-4 border-transparent text-gray-500 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(2)">THE END</button>
-                <button id="tab3" class="tab-btn border-b-4 border-transparent text-gray-500 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(3)">CHALLENGES</button>
+                <button id="tab3" class="tab-btn border-b-4 border-transparent text-gray-500 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(3)">ORE</button>
+                <button id="tab4" class="tab-btn border-b-4 border-transparent text-gray-500 text-[8px] py-2 px-0.5 flex-1 font-bold" onclick="switchTab(4)">CHALLENGES</button>
             </div>
 
             <!-- Dynamic Level List Container -->
@@ -188,6 +189,7 @@
 
     // Progression System
     let unlockedLevel = parseInt(localStorage.getItem('flappyCreeperUnlocked2')) || 0;
+    let unlockedOreLevel = parseInt(localStorage.getItem('flappyCreeperUnlockedOre')) || 27;
     
     const LEVELS = [
         // ---------------- OVERWORLD (0 - 4) ----------------
@@ -509,6 +511,78 @@
             enemies: ['bat'],
             points: { small: 'quartz', large: 'gold' },
             speedMult: 1.1, pillarGap: 160, spawnDist: 180, powerupChance: 0.0
+        },
+        {
+            name: "Coal Cave", winScore: 40,
+            bg: 'cave', cloudType: 'fog',
+            ground: { top: '#2c3e50', side: '#7f8c8d', detail: '#95a5a6' },
+            pillar: { top: '#2c3e50', side: '#7f8c8d', detail: '#95a5a6' },
+            enemies: ['zombie'],
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.15, pillarGap: 180, spawnDist: 200, powerupChance: 0.40
+        },
+        {
+            name: "Iron Mine", winScore: 45,
+            bg: 'plains', cloudType: 'fluffy',
+            ground: { top: '#e67e22', side: '#d35400', detail: '#e67e22' },
+            pillar: { top: '#e67e22', side: '#d35400', detail: '#e67e22' },
+            enemies: ['skeleton'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.2, pillarGap: 175, spawnDist: 190, powerupChance: 0.40
+        },
+        {
+            name: "Golden Shaft", winScore: 45,
+            bg: 'desert', cloudType: 'sand',
+            ground: { top: '#f1c40f', side: '#f39c12', detail: '#f1c40f' },
+            pillar: { top: '#f1c40f', side: '#f39c12', detail: '#f1c40f' },
+            enemies: ['bat'],
+            points: { small: 'gold', large: 'eye' },
+            speedMult: 1.25, pillarGap: 175, spawnDist: 185, powerupChance: 0.45
+        },
+        {
+            name: "Diamond Depths", winScore: 50,
+            bg: 'soul_sand', cloudType: 'ash',
+            ground: { top: '#3498db', side: '#2980b9', detail: '#3498db' },
+            pillar: { top: '#3498db', side: '#2980b9', detail: '#3498db' },
+            enemies: ['wither_skeleton'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.3, pillarGap: 170, spawnDist: 180, powerupChance: 0.50
+        },
+        {
+            name: "Emerald Peak", winScore: 50,
+            bg: 'mushroom_fields', cloudType: 'fluffy',
+            ground: { top: '#2ecc71', side: '#27ae60', detail: '#2ecc71' },
+            pillar: { top: '#2ecc71', side: '#27ae60', detail: '#2ecc71' },
+            enemies: ['vex'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.35, pillarGap: 165, spawnDist: 175, powerupChance: 0.50
+        },
+        {
+            name: "Laser Blast", winScore: 50,
+            bg: 'cave', cloudType: 'fog',
+            ground: { top: '#ff3333', side: '#aa2222', detail: '#ff3333' },
+            pillar: { top: '#ff3333', side: '#aa2222', detail: '#ff3333' },
+            enemies: ['zombie'],
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.2, pillarGap: 175, spawnDist: 190, powerupChance: 0.0
+        },
+        {
+            name: "Hammer Time", winScore: 45,
+            bg: 'plains', cloudType: 'fluffy',
+            ground: { top: '#4a2711', side: '#2f1507', detail: '#4a2711' },
+            pillar: { top: '#4a2711', side: '#2f1507', detail: '#4a2711' },
+            enemies: ['skeleton'],
+            points: { small: 'diamond', large: 'emerald' },
+            speedMult: 1.2, pillarGap: 170, spawnDist: 185, powerupChance: 0.0
+        },
+        {
+            name: "Iron Fortress", winScore: 40,
+            bg: 'void_islands', cloudType: 'void',
+            ground: { top: '#95a5a6', side: '#7f8c8d', detail: '#95a5a6' },
+            pillar: { top: '#95a5a6', side: '#7f8c8d', detail: '#95a5a6' },
+            enemies: ['vex'],
+            points: { small: 'amethyst', large: 'eye' },
+            speedMult: 1.1, pillarGap: 165, spawnDist: 180, powerupChance: 0.0
         }
     ];
     let activeLevel = 0;
@@ -521,12 +595,14 @@
             document.getElementById('tab0'),
             document.getElementById('tab1'),
             document.getElementById('tab2'),
-            document.getElementById('tab3')
+            document.getElementById('tab3'),
+            document.getElementById('tab4')
         ];
         const colors = [
             'border-green-500 text-green-400',
             'border-red-500 text-red-400',
             'border-purple-500 text-purple-400',
+            'border-cyan-500 text-cyan-400',
             'border-orange-500 text-orange-400'
         ];
         
@@ -554,7 +630,9 @@
 
     window.confirmResetProgress = function() {
         unlockedLevel = 0;
+        unlockedOreLevel = 27;
         localStorage.setItem('flappyCreeperUnlocked2', 0);
+        localStorage.setItem('flappyCreeperUnlockedOre', 27);
         localStorage.removeItem('enderDragonBeaten');
         localStorage.removeItem('flappyCreeperUnlockedSlime');
         localStorage.removeItem('flappyCreeperUnlockedElytra');
@@ -565,6 +643,9 @@
         localStorage.removeItem('flappyCreeperUnlockedSwiftness');
         localStorage.removeItem('flappyCreeperUnlockedMagnet');
         localStorage.removeItem('flappyCreeperUnlockedShrink');
+        localStorage.removeItem('flappyCreeperUnlockedOverdrive');
+        localStorage.removeItem('flappyCreeperUnlockedHammer');
+        localStorage.removeItem('flappyCreeperUnlockedShield');
         updateMenuLocks();
         switchTab(0);
         cancelResetProgress();
@@ -582,7 +663,14 @@
         
         const levelIndices = [];
         if (activeTab === 3) {
+            for (let i = 27; i <= 31; i++) {
+                levelIndices.push(i);
+            }
+        } else if (activeTab === 4) {
             for (let i = 18; i <= 26; i++) {
+                levelIndices.push(i);
+            }
+            for (let i = 32; i <= 34; i++) {
                 levelIndices.push(i);
             }
         } else {
@@ -609,6 +697,12 @@
             if (i >= 18 && i <= 26) {
                 const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing', 'flappyCreeperUnlockedSwiftness', 'flappyCreeperUnlockedMagnet', 'flappyCreeperUnlockedShrink'];
                 isUnlocked = localStorage.getItem(keys[i - 18]) === 'true';
+            } else if (i >= 32 && i <= 34) {
+                const keys = ['flappyCreeperUnlockedOverdrive', 'flappyCreeperUnlockedHammer', 'flappyCreeperUnlockedShield'];
+                isUnlocked = localStorage.getItem(keys[i - 32]) === 'true';
+            } else if (i >= 27 && i <= 31) {
+                let dragonBeaten = localStorage.getItem('enderDragonBeaten') === 'true';
+                isUnlocked = dragonBeaten && i <= unlockedOreLevel;
             } else if (i >= 15 && i <= 17) {
                 isUnlocked = true;
             } else {
@@ -624,27 +718,40 @@
             if (activeTab === 0 && isUnlocked) titleClass = 'text-green-300';
             else if (activeTab === 1 && isUnlocked) titleClass = 'text-red-300';
             else if (activeTab === 2 && isUnlocked) titleClass = 'text-purple-300';
-            else if (activeTab === 3 && isUnlocked) titleClass = 'text-orange-300';
+            else if (activeTab === 3 && isUnlocked) titleClass = 'text-cyan-300';
+            else if (activeTab === 4 && isUnlocked) titleClass = 'text-orange-300';
             
             if (i === 14 && isUnlocked && activeDifficulty !== 'simple') {
                 btn.className = `level-btn unlocked border-pink-500 shadow-[0_0_15px_rgba(255,0,255,0.4)]`;
                 titleClass = 'text-pink-400 font-bold';
-            } else if (i >= 18 && isUnlocked) {
+            } else if (((i >= 18 && i <= 26) || (i >= 32 && i <= 34)) && isUnlocked) {
                 btn.className = `level-btn unlocked border-orange-500 shadow-[0_0_12px_rgba(255,165,0,0.3)]`;
                 titleClass = 'text-orange-400 font-bold';
-            } else if (i >= 15 && isUnlocked) {
+            } else if (i >= 15 && i <= 17) {
                 btn.className = `level-btn unlocked border-yellow-500 shadow-[0_0_12px_rgba(255,215,0,0.3)]`;
                 titleClass = 'text-yellow-400 font-bold';
+            } else if (i >= 27 && i <= 31 && isUnlocked) {
+                btn.className = `level-btn unlocked border-cyan-500 shadow-[0_0_12px_rgba(0,255,255,0.3)]`;
+                titleClass = 'text-cyan-400 font-bold';
             }
             
-            const num = i >= 18 ? `CHALLENGE ${i - 17}` : (i >= 15 ? "BONUS" : ((i % 5) + 1));
-            let titleText = i >= 18 ? `${num}: ${lvl.name.toUpperCase()}` : `${num}. ${lvl.name.toUpperCase()}`;
+            let num = "";
+            if (i >= 18 && i <= 26) num = `CHALLENGE ${i - 17}`;
+            else if (i >= 32 && i <= 34) num = `CHALLENGE ${i - 22}`;
+            else if (i >= 27 && i <= 31) num = `ORE ${i - 26}`;
+            else if (i >= 15 && i <= 17) num = "BONUS";
+            else num = `${(i % 5) + 1}`;
+            
+            let titleText = ((i >= 18 && i <= 26) || (i >= 32 && i <= 34)) ? `${num}: ${lvl.name.toUpperCase()}` : `${num}. ${lvl.name.toUpperCase()}`;
             if (i === 14 && activeDifficulty !== 'simple') titleText += " [BOSS FIGHT]";
             
             let goalText = "";
             if (i >= 18 && i <= 26) {
                 const unlockItems = ['Slime', 'Elytra', 'Blaze Rod', 'Ender Pearl', 'Clock', 'Lead', 'Swiftness Potion', 'Magnet', 'Chorus Fruit'];
                 goalText = isUnlocked ? `Goal: ${lvl.winScore} Points` : `Unlock: Collect ${unlockItems[i - 18]} in game`;
+            } else if (i >= 32 && i <= 34) {
+                const unlockItems = ['Redstone Overdrive', 'Netherite Hammer', 'Iron Shield'];
+                goalText = isUnlocked ? `Goal: ${lvl.winScore} Points` : `Unlock: Collect ${unlockItems[i - 32]} in game`;
             } else if (i === 14 && activeDifficulty !== 'simple') {
                 goalText = isUnlocked ? "Goal: Defeat Ender Dragon" : "Goal: Defeat Ender Dragon (Locked)";
             } else {
@@ -738,11 +845,51 @@
         scoreDisplay.style.transform = 'scale(1.5)';
         setTimeout(() => scoreDisplay.style.transform = 'scale(1)', 150);
         
+        if (typeof creeper !== 'undefined' && activeLevel === 34) {
+            let oldScoreFactor = Math.floor((score - amount) / 10);
+            let newScoreFactor = Math.floor(score / 10);
+            if (newScoreFactor > oldScoreFactor && creeper.shieldCount < 3) {
+                creeper.shieldCount++;
+                effects.addText(creeper.x + creeper.currentSize/2, creeper.y - 20, "+1 SHIELD!", "#bdc3c7");
+            }
+        }
+        
         // Win Condition Check
         if (score >= LEVELS[activeLevel].winScore && currentState === state.game) {
             triggerWin();
         } else {
             playScoreSound();
+        }
+    }
+
+    function breakPillar(pil) {
+        if (pil.destroyed) return;
+        pil.destroyed = true;
+        addScore(1);
+        
+        let colors = LEVELS[activeLevel].pillar;
+        effects.addExplosion(pil.x + pillars.width/2, LOGICAL_HEIGHT/2, [colors.top, colors.side, '#ffffff'], 20, 1.0);
+        
+        if (activeLevel >= 27 && activeLevel <= 31) {
+            let itemType = 'diamond';
+            let roll = Math.random();
+            if (roll < 0.12) itemType = 'overdrive';
+            else if (roll < 0.24) itemType = 'hammer';
+            else if (roll < 0.36) itemType = 'shield';
+            else if (roll < 0.46) itemType = 'tnt';
+            else if (roll < 0.56) itemType = 'apple';
+            else if (roll < 0.66) itemType = 'swiftness';
+            else if (roll < 0.74) itemType = 'totem';
+            else if (roll < 0.82) itemType = 'emerald';
+            else if (roll < 0.90) itemType = 'chorus';
+            else itemType = 'slime';
+            
+            powerups.items.push({
+                x: pil.x + pillars.width/2 - 12,
+                y: LOGICAL_HEIGHT/2 - 12 + (Math.random() - 0.5) * 40,
+                type: itemType,
+                collected: false
+            });
         }
     }
 
@@ -787,7 +934,26 @@
             if (flashAlpha > 0) flashAlpha -= 0.05 * particleSpeed;
         },
         draw() {
-            this.particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
+            this.particles.forEach(p => {
+                if (p.isLaserBeam) {
+                    ctx.save();
+                    ctx.globalAlpha = p.life;
+                    ctx.strokeStyle = '#ff3333';
+                    ctx.lineWidth = 6;
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.laserY);
+                    ctx.lineTo(p.x + 320, p.laserY);
+                    ctx.stroke();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.restore();
+                } else {
+                    ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size);
+                }
+            });
             ctx.textAlign = 'center'; ctx.font = "12px 'Press Start 2P'";
             this.floatingTexts.forEach(ft => {
                 ctx.globalAlpha = ft.life; ctx.fillStyle = '#000'; ctx.fillText(ft.text, ft.x+2, ft.y+2);
@@ -976,6 +1142,7 @@
         isSwinging: false, swingAnchorX: 0, swingAnchorY: 0, swingR: 0,
         lives: 3, maxLives: 3,
         swiftnessTimer: 0, totemCount: 0, magnetTimer: 0,
+        overdriveTimer: 0, hammerTimer: 0, shieldCount: 0, laserCooldown: 0,
 
         draw() {
             if (this.exploded) return;
@@ -1144,6 +1311,41 @@
                 }
                 ctx.restore();
             }
+            if (this.overdriveTimer > 0) {
+                ctx.save();
+                ctx.strokeStyle = `rgba(255, 34, 34, ${0.6 + Math.abs(Math.sin(frames/8)) * 0.4})`;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(this.x - 2, this.y - 2, this.currentSize + 4, this.currentSize + 4);
+                ctx.restore();
+            }
+            if (this.hammerTimer > 0) {
+                ctx.save();
+                ctx.translate(this.x + this.currentSize/2, this.y + this.currentSize/2);
+                ctx.rotate(frames / 10);
+                ctx.fillStyle = '#8b5a2b';
+                ctx.fillRect(0, -2, 25, 4);
+                ctx.fillStyle = '#4a4a4a';
+                ctx.fillRect(20, -8, 12, 16);
+                ctx.fillStyle = '#aa00ff';
+                ctx.fillRect(22, -6, 8, 12);
+                ctx.restore();
+            }
+            if (this.shieldCount > 0) {
+                for (let i = 0; i < this.shieldCount; i++) {
+                    ctx.save();
+                    ctx.translate(this.x + this.currentSize/2, this.y + this.currentSize/2);
+                    let angle = (frames / 20) + (i * Math.PI * 2 / 3);
+                    let dist = 28;
+                    let sx = Math.cos(angle) * dist;
+                    let sy = Math.sin(angle) * dist;
+                    ctx.translate(sx - 4, sy - 5);
+                    ctx.fillStyle = '#95a5a6';
+                    ctx.fillRect(0, 0, 8, 10);
+                    ctx.fillStyle = '#bdc3c7';
+                    ctx.fillRect(1, 1, 6, 8);
+                    ctx.restore();
+                }
+            }
         },
 
         update() {
@@ -1168,12 +1370,31 @@
             if (this.swiftnessTimer > 0 && frames % 3 === 0) {
                 effects.addExplosion(this.x + this.currentSize / 2, this.y + this.currentSize / 2, ['#00d2ff', '#00f6ff', '#ffffff'], 1, 0.4, 0.05, true);
             }
+            if (this.overdriveTimer > 0 && frames % 4 === 0) {
+                effects.addExplosion(this.x + this.currentSize / 2, this.y + this.currentSize / 2, ['#ff2222', '#ff8888', '#ffffff'], 1, 0.4, 0.05, true);
+            }
 
             if (this.invincibleTimer > 0) this.invincibleTimer--;
             if (this.phaseTimer > 0) this.phaseTimer--;
             if (this.slowMoTimer > 0) this.slowMoTimer--;
             if (this.swiftnessTimer > 0) this.swiftnessTimer--;
             if (this.magnetTimer > 0) this.magnetTimer--;
+            if (this.overdriveTimer > 0) this.overdriveTimer--;
+            if (this.hammerTimer > 0) this.hammerTimer--;
+            if (this.laserCooldown > 0) this.laserCooldown--;
+
+            if (this.hammerTimer > 0) {
+                let px = this.x + this.currentSize/2;
+                pillars.items.forEach(pil => {
+                    if (!pil.destroyed) {
+                        let pilMidX = pil.x + pillars.width/2;
+                        if (Math.abs(px - pilMidX) < 100) {
+                            breakPillar(pil);
+                            triggerShake(10, 4);
+                        }
+                    }
+                });
+            }
             
             if (this.shrinkTimer > 0) {
                 this.shrinkTimer--; this.currentSize = 16; 
@@ -1205,6 +1426,12 @@
                 this.magnetTimer = 999999;
             } else if (activeLevel === 26) {
                 this.shrinkTimer = 999999;
+            } else if (activeLevel === 32) {
+                this.overdriveTimer = 999999;
+            } else if (activeLevel === 33) {
+                this.hammerTimer = 999999;
+            } else if (activeLevel === 34) {
+                if (this.shieldCount === 0 && gameFrames === 0) this.shieldCount = 3;
             } else if (this.transformTimer > 0) {
                 if (--this.transformTimer === 0) { this.transform = 'none'; transformAlert.classList.add('hidden'); }
             } else { this.transform = 'none'; }
@@ -1364,6 +1591,36 @@
         takeDamage() {
             if (this.invincibleTimer > 0 || this.isDying || this.exploded) return;
             
+            if (this.shieldCount > 0) {
+                this.shieldCount--;
+                this.invincibleTimer = 45;
+                this.velocity = -this.jump * 0.4;
+                pillars.items.forEach(pil => {
+                    if (!pil.destroyed && pil.x > -pillars.width && pil.x < LOGICAL_WIDTH) {
+                        let px = this.x + this.currentSize/2;
+                        if (Math.abs(px - (pil.x + pillars.width/2)) < 85) {
+                            breakPillar(pil);
+                        }
+                    }
+                });
+                triggerShake(10, 4);
+                if (audioCtx) {
+                    let now = audioCtx.currentTime;
+                    let osc = audioCtx.createOscillator();
+                    let gainNode = audioCtx.createGain();
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(587.33, now);
+                    gainNode.gain.setValueAtTime(0.15, now);
+                    gainNode.gain.linearRampToValueAtTime(0.001, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                }
+                effects.addText(this.x + this.currentSize/2, this.y - 20, "SHIELD BLOCK!", "#bdc3c7");
+                return;
+            }
+            
             if (this.totemCount > 0) {
                 this.totemCount--;
                 this.invincibleTimer = 180;
@@ -1393,9 +1650,7 @@
                 
                 pillars.items.forEach(pil => {
                     if (pil.x > -pillars.width && pil.x < LOGICAL_WIDTH) {
-                        pil.destroyed = true; addScore(1);
-                        let lvl = LEVELS[activeLevel].pillar;
-                        effects.addExplosion(pil.x + pillars.width/2, this.y, [lvl.top, lvl.side, '#ffd700'], 20, 0.8);
+                        breakPillar(pil);
                     }
                 });
                 
@@ -1441,6 +1696,7 @@
             this.isDying = false; this.dyingTimer = 0;
             this.invincibleTimer = 0; this.shrinkTimer = 0; this.transformTimer = 0; this.phaseTimer = 0; this.slowMoTimer = 0;
             this.swiftnessTimer = 0; this.totemCount = 0; this.magnetTimer = 0;
+            this.overdriveTimer = 0; this.hammerTimer = 0; this.shieldCount = 0; this.laserCooldown = 0;
             this.transform = 'none'; this.currentSize = this.baseSize; this.gravityActive = this.gravityBase;
             this.isSwinging = false; this.swingAnchorX = 0; this.swingAnchorY = 0; this.swingR = 0;
             this.lives = (activeLevel === 14 && activeDifficulty !== 'simple') ? 3 : 1; this.maxLives = this.lives;
@@ -1811,6 +2067,18 @@
                     ctx.strokeStyle = '#ff2222'; ctx.lineWidth = 4.5; ctx.lineCap = 'square';
                     ctx.beginPath(); ctx.arc(12, 10, 6, Math.PI, 0, true); ctx.stroke();
                     ctx.fillStyle = '#dddddd'; ctx.fillRect(4, 10, 5, 3); ctx.fillRect(15, 10, 5, 3);
+                } else if (p.type === 'overdrive') {
+                    ctx.fillStyle = '#ff3333'; ctx.fillRect(6, 6, 12, 12);
+                    ctx.fillStyle = '#990000'; ctx.fillRect(8, 8, 8, 8);
+                    ctx.fillStyle = '#ffffff'; ctx.fillRect(7, 7, 2, 2);
+                } else if (p.type === 'hammer') {
+                    ctx.fillStyle = '#8b5a2b'; ctx.fillRect(11, 10, 2, 10);
+                    ctx.fillStyle = '#4a4a4a'; ctx.fillRect(4, 4, 16, 8);
+                    ctx.fillStyle = '#aa00ff'; ctx.fillRect(6, 6, 12, 4);
+                } else if (p.type === 'shield') {
+                    ctx.fillStyle = '#95a5a6'; ctx.fillRect(6, 4, 12, 14);
+                    ctx.fillStyle = '#bdc3c7'; ctx.fillRect(8, 6, 8, 10);
+                    ctx.fillStyle = '#7f8c8d'; ctx.fillRect(6, 16, 12, 2);
                 }
                 ctx.restore();
             });
@@ -1886,6 +2154,15 @@
                 } else if (p.type === 'magnet') {
                     creeper.magnetTimer = 480; effects.addExplosion(cx, cy, ['#aa55ff', '#ddbaff', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "MAGNET ACTIVE", "#b280ff");
                     if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedMagnet', 'true');
+                } else if (p.type === 'overdrive') {
+                    creeper.overdriveTimer = 360; effects.addExplosion(cx, cy, ['#ff2222', '#ff8888', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "REDSTONE OVERDRIVE!", "#ff3333");
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedOverdrive', 'true');
+                } else if (p.type === 'hammer') {
+                    creeper.hammerTimer = 360; effects.addExplosion(cx, cy, ['#8e44ad', '#bb88ff', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "HAMMER TIME!", "#b280ff");
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedHammer', 'true');
+                } else if (p.type === 'shield') {
+                    creeper.shieldCount = Math.min(3, creeper.shieldCount + 3); effects.addExplosion(cx, cy, ['#bdc3c7', '#95a5a6', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "SHIELD CHARGED", "#bdc3c7");
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedShield', 'true');
                 }
             }
         },
@@ -1895,9 +2172,8 @@
             effects.addExplosion(x, y, ['#ff0000', '#ffaa00', '#ffffff', '#555555'], 100, 2.5);
             pillars.items.forEach(p => {
                 if (!p.destroyed && p.x > -pillars.width && p.x < LOGICAL_WIDTH) {
-                    p.destroyed = true; addScore(2);
-                    let lvl = LEVELS[activeLevel].pillar;
-                    effects.addExplosion(p.x + pillars.width/2, LOGICAL_HEIGHT/2, [lvl.top, lvl.side, '#ffaa00'], 30, 1.5);
+                    breakPillar(p);
+                    addScore(1);
                     effects.addText(p.x + pillars.width/2, LOGICAL_HEIGHT/2, "SMASH!", "#ffaa00");
                 }
             });
@@ -2095,6 +2371,44 @@
                 ctx.fillRect(x + 15, isTop ? y + h - 18 : y, 2, 8);
                 ctx.fillRect(x + 45, isTop ? y + h - 18 : y, 2, 8);
                 ctx.fillRect(x + 30, isTop ? y + h - 10 : y + 8, 2, 8);
+            } else if (activeLevel >= 27 && activeLevel <= 34) {
+                let baseColor = '#7a7a7a';
+                if (activeLevel === 33) baseColor = '#4a4a4a';
+                else if (activeLevel === 34) baseColor = '#bdc3c7';
+                
+                ctx.fillStyle = baseColor;
+                ctx.fillRect(x, y, w, h);
+                
+                ctx.fillStyle = activeLevel === 34 ? '#95a5a6' : '#555555';
+                for (let i = 0; i < h; i += 16) {
+                    ctx.fillRect(x, y + i, w, 2);
+                    let offset = (Math.floor(i / 16) % 2 === 0 ? 0 : 15);
+                    for (let j = offset; j < w; j += 30) {
+                        ctx.fillRect(x + j, y + i, 2, 16);
+                    }
+                }
+                
+                if (activeLevel !== 34) {
+                    let speckleColor = '#111111';
+                    if (activeLevel === 28) speckleColor = '#d1a07d';
+                    else if (activeLevel === 29) speckleColor = '#f1c40f';
+                    else if (activeLevel === 30) speckleColor = '#3498db';
+                    else if (activeLevel === 31) speckleColor = '#2ecc71';
+                    else if (activeLevel === 32) speckleColor = '#ff3333';
+                    else if (activeLevel === 33) speckleColor = '#aa00ff';
+                    
+                    ctx.fillStyle = speckleColor;
+                    for (let i = 4; i < h - 12; i += 16) {
+                        ctx.fillRect(x + 8, y + i + 2, 4, 4);
+                        ctx.fillRect(x + 10, y + i + 4, 4, 4);
+                        ctx.fillRect(x + 22, y + i + 8, 4, 4);
+                        ctx.fillRect(x + w - 16, y + i + 4, 4, 4);
+                        ctx.fillRect(x + w - 14, y + i + 6, 4, 4);
+                    }
+                }
+                
+                ctx.fillStyle = colors.top;
+                if (isTop) ctx.fillRect(x, y + h - 15, w, 15); else ctx.fillRect(x, y, w, 15);
             } else {
                 ctx.fillStyle = colors.side; ctx.fillRect(x, y, w, h);
                 ctx.fillStyle = colors.detail;
@@ -2175,6 +2489,9 @@
                     else if (pRoll < 0.50) pType = 'pearl'; else if (pRoll < 0.57) pType = 'clock';
                     else if (pRoll < 0.64) pType = 'swing'; else if (pRoll < 0.71) pType = 'swiftness';
                     else if (pRoll < 0.78) pType = 'totem'; else if (pRoll < 0.85) pType = 'magnet';
+                    else if (pRoll < 0.90 && (activeLevel >= 27 && activeLevel <= 31)) pType = 'overdrive';
+                    else if (pRoll < 0.94 && (activeLevel >= 27 && activeLevel <= 31)) pType = 'hammer';
+                    else if (pRoll < 0.98 && (activeLevel >= 27 && activeLevel <= 31)) pType = 'shield';
                     else {
                         let appleMult = LEVELS[activeLevel].appleChanceMult || 1.0;
                         let appleThreshold = 0.85 + (0.05 * appleMult);
@@ -2557,6 +2874,11 @@
         } else if (levelIndex >= 18 && levelIndex <= 26) {
             const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing', 'flappyCreeperUnlockedSwiftness', 'flappyCreeperUnlockedMagnet', 'flappyCreeperUnlockedShrink'];
             isLevelPlayable = localStorage.getItem(keys[levelIndex - 18]) === 'true';
+        } else if (levelIndex >= 27 && levelIndex <= 31) {
+            isLevelPlayable = localStorage.getItem('enderDragonBeaten') === 'true' && levelIndex <= unlockedOreLevel;
+        } else if (levelIndex >= 32 && levelIndex <= 34) {
+            const keys = ['flappyCreeperUnlockedOverdrive', 'flappyCreeperUnlockedHammer', 'flappyCreeperUnlockedShield'];
+            isLevelPlayable = localStorage.getItem(keys[levelIndex - 32]) === 'true';
         }
 
         if (!isLevelPlayable) return;
@@ -2609,6 +2931,10 @@
         } else if (activeLevel === 14) {
             localStorage.setItem('enderDragonBeaten', 'true');
             updateMenuLocks();
+        } else if (activeLevel >= 27 && activeLevel <= 30 && activeLevel === unlockedOreLevel) {
+            unlockedOreLevel++;
+            localStorage.setItem('flappyCreeperUnlockedOre', unlockedOreLevel);
+            updateMenuLocks();
         }
 
         document.getElementById('pauseContainer').classList.add('hidden');
@@ -2649,7 +2975,47 @@
     }
 
     function handleInput() {
-        if (currentState === state.game && !isPaused) creeper.flap();
+        if (currentState === state.game && !isPaused) {
+            creeper.flap();
+            if (creeper.overdriveTimer > 0 && creeper.laserCooldown === 0) {
+                creeper.laserCooldown = 12;
+                let lx = creeper.x + creeper.currentSize/2;
+                let ly = creeper.y + creeper.currentSize/2;
+                
+                if (audioCtx) {
+                    let now = audioCtx.currentTime;
+                    let osc = audioCtx.createOscillator();
+                    let gainNode = audioCtx.createGain();
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.15);
+                    gainNode.gain.setValueAtTime(0.12, now);
+                    gainNode.gain.linearRampToValueAtTime(0.001, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.16);
+                }
+                
+                effects.particles.push({
+                    x: lx, y: ly, vx: 0, vy: 0,
+                    size: 8, color: '#ff2222',
+                    life: 1.0, decay: 0.08, ig: true,
+                    isLaserBeam: true,
+                    laserY: ly
+                });
+                
+                pillars.items.forEach(pil => {
+                    if (!pil.destroyed) {
+                        let pilLeft = pil.x;
+                        if (pilLeft > lx && pilLeft < lx + 320) {
+                            breakPillar(pil);
+                            triggerShake(8, 3);
+                        }
+                    }
+                });
+            }
+        }
     }
 
     let cheatBuffer = "";
@@ -2679,7 +3045,9 @@
             if (cheatBuffer === CHEAT_CODE) {
                 cheatBuffer = "";
                 unlockedLevel = 14;
+                unlockedOreLevel = 31;
                 localStorage.setItem('flappyCreeperUnlocked2', 14);
+                localStorage.setItem('flappyCreeperUnlockedOre', 31);
                 localStorage.setItem('enderDragonBeaten', 'true');
                 localStorage.setItem('flappyCreeperUnlockedSlime', 'true');
                 localStorage.setItem('flappyCreeperUnlockedElytra', 'true');
@@ -2690,7 +3058,10 @@
                 localStorage.setItem('flappyCreeperUnlockedSwiftness', 'true');
                 localStorage.setItem('flappyCreeperUnlockedMagnet', 'true');
                 localStorage.setItem('flappyCreeperUnlockedShrink', 'true');
-                switchTab(2);
+                localStorage.setItem('flappyCreeperUnlockedOverdrive', 'true');
+                localStorage.setItem('flappyCreeperUnlockedHammer', 'true');
+                localStorage.setItem('flappyCreeperUnlockedShield', 'true');
+                switchTab(3);
                 triggerShake(25, 10);
                 flashAlpha = 1.0;
                 effects.addExplosion(LOGICAL_WIDTH/2, LOGICAL_HEIGHT/2, ['#FFD700', '#ffffff', '#55ff55'], 40, 1.0, 0.03, true);
