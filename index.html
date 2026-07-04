@@ -875,18 +875,10 @@
         effects.addExplosion(pil.x + pillars.width/2, LOGICAL_HEIGHT/2, [colors.top, colors.side, '#ffffff'], 20, 1.0);
         
         if (activeLevel >= 27 && activeLevel <= 31) {
-            let itemType = 'diamond';
-            let roll = Math.random();
-            if (roll < 0.12) itemType = 'overdrive';
-            else if (roll < 0.24) itemType = 'hammer';
-            else if (roll < 0.36) itemType = 'shield';
-            else if (roll < 0.46) itemType = 'tnt';
-            else if (roll < 0.56) itemType = 'apple';
-            else if (roll < 0.66) itemType = 'swiftness';
-            else if (roll < 0.74) itemType = 'totem';
-            else if (roll < 0.82) itemType = 'emerald';
-            else if (roll < 0.90) itemType = 'chorus';
-            else itemType = 'slime';
+            // If the hidden item was already collected while phasing, skip the drop
+            if (pil.hiddenItem && pil.hiddenItem.collected) return;
+            
+            let itemType = pil.hiddenItem ? pil.hiddenItem.type : 'diamond';
             
             powerups.items.push({
                 x: pil.x + pillars.width/2 - 12,
@@ -2023,72 +2015,75 @@
         draw() {
             this.items.forEach(p => {
                 if (p.collected) return;
-                let floatY = p.y + Math.sin((gameFrames + p.x) / 15) * 5; // Slow mo float!
-                ctx.save(); ctx.translate(p.x, floatY);
-
-                if (p.type === 'diamond') {
-                    ctx.fillStyle = '#4ae8e8'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
-                    ctx.fillStyle = '#bdfdfd'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 10); ctx.lineTo(4, 8); ctx.fill();
-                } else if (p.type === 'emerald') {
-                    ctx.fillStyle = '#4de04d'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(16, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
-                    ctx.fillStyle = '#90f090'; ctx.beginPath(); ctx.moveTo(9, 2); ctx.lineTo(15, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 11); ctx.lineTo(4, 8); ctx.fill();
-                } else if (p.type === 'quartz') {
-                    ctx.fillStyle = '#e5e5e5'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
-                    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 10); ctx.lineTo(4, 8); ctx.fill();
-                } else if (p.type === 'gold') {
-                    ctx.fillStyle = '#d4af37'; ctx.fillRect(4, 8, 16, 8); ctx.fillStyle = '#fceabb'; ctx.fillRect(6, 10, 12, 2);
-                } else if (p.type === 'amethyst') {
-                    ctx.fillStyle = '#9966cc'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(20, 12); ctx.lineTo(12, 24); ctx.lineTo(4, 12); ctx.fill();
-                    ctx.fillStyle = '#d8b2ff'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(18, 12); ctx.lineTo(12, 14); ctx.lineTo(6, 12); ctx.fill();
-                } else if (p.type === 'eye') {
-                    ctx.fillStyle = '#aaddaa'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#003300'; ctx.beginPath(); ctx.arc(12, 12, 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#000'; ctx.fillRect(11, 10, 2, 4);
-                } else if (p.type === 'apple') {
-                    ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(12, 14, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#5c3f29'; ctx.fillRect(11, 0, 3, 6); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(6, 10, 4, 4);
-                } else if (p.type === 'chorus') {
-                    ctx.fillStyle = '#a040a0'; ctx.fillRect(6, 6, 12, 12); ctx.fillStyle = '#d080d0'; ctx.fillRect(4, 10, 16, 4); ctx.fillRect(10, 4, 4, 16); ctx.fillStyle = '#fff'; ctx.fillRect(10, 10, 4, 4);
-                } else if (p.type === 'tnt') {
-                    ctx.fillStyle = '#db2f2f'; ctx.fillRect(2, 2, 20, 20); ctx.fillStyle = '#ffffff'; ctx.fillRect(2, 8, 20, 8); ctx.fillStyle = '#000000'; ctx.font = "6px 'Press Start 2P'"; ctx.fillText("TNT", 4, 15);
-                } else if (p.type === 'slime') {
-                    ctx.fillStyle = '#55ff55'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#aaffaa'; ctx.fillRect(6, 6, 4, 4); 
-                } else if (p.type === 'elytra') {
-                    ctx.fillStyle = '#777788'; ctx.beginPath(); ctx.moveTo(12, 4); ctx.lineTo(20, 20); ctx.lineTo(12, 16); ctx.lineTo(4, 20); ctx.fill();
-                } else if (p.type === 'blaze') {
-                    ctx.fillStyle = '#ffaa00'; ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffff00'; ctx.fillRect(10, 0, 4, 8); ctx.fillRect(10, 16, 4, 8); ctx.fillRect(0, 10, 8, 4); ctx.fillRect(16, 10, 8, 4);
-                } else if (p.type === 'pearl') {
-                    ctx.fillStyle = '#33aaaa'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#115555'; ctx.beginPath(); ctx.arc(12, 12, 5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#66ffff'; ctx.fillRect(7, 7, 3, 3);
-                } else if (p.type === 'clock') {
-                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(12, 12, 11, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#000000'; ctx.fillRect(11, 6, 2, 6); ctx.fillRect(11, 11, 5, 2); 
-                } else if (p.type === 'swing') {
-                    ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 3;
-                    ctx.beginPath(); ctx.arc(12, 12, 6, 0, Math.PI * 2); ctx.stroke();
-                    ctx.fillStyle = '#cccccc'; ctx.fillRect(6, 6, 3, 3);
-                } else if (p.type === 'swiftness') {
-                    ctx.fillStyle = '#00ffff'; ctx.fillRect(8, 8, 8, 12); ctx.fillRect(6, 10, 12, 10);
-                    ctx.fillStyle = '#5c3f29'; ctx.fillRect(10, 4, 4, 4);
-                    ctx.fillStyle = '#ffffff'; ctx.fillRect(9, 11, 2, 4);
-                } else if (p.type === 'totem') {
-                    ctx.fillStyle = '#ffcc00'; ctx.fillRect(8, 2, 8, 6); ctx.fillRect(4, 8, 16, 4); ctx.fillRect(9, 12, 6, 10);
-                    ctx.fillStyle = '#55ff55'; ctx.fillRect(8, 9, 2, 2); ctx.fillRect(14, 9, 2, 2);
-                } else if (p.type === 'magnet') {
-                    ctx.strokeStyle = '#ff2222'; ctx.lineWidth = 4.5; ctx.lineCap = 'square';
-                    ctx.beginPath(); ctx.arc(12, 10, 6, Math.PI, 0, true); ctx.stroke();
-                    ctx.fillStyle = '#dddddd'; ctx.fillRect(4, 10, 5, 3); ctx.fillRect(15, 10, 5, 3);
-                } else if (p.type === 'overdrive') {
-                    ctx.fillStyle = '#ff3333'; ctx.fillRect(6, 6, 12, 12);
-                    ctx.fillStyle = '#990000'; ctx.fillRect(8, 8, 8, 8);
-                    ctx.fillStyle = '#ffffff'; ctx.fillRect(7, 7, 2, 2);
-                } else if (p.type === 'hammer') {
-                    ctx.fillStyle = '#8b5a2b'; ctx.fillRect(11, 10, 2, 10);
-                    ctx.fillStyle = '#4a4a4a'; ctx.fillRect(4, 4, 16, 8);
-                    ctx.fillStyle = '#aa00ff'; ctx.fillRect(6, 6, 12, 4);
-                } else if (p.type === 'shield') {
-                    ctx.fillStyle = '#95a5a6'; ctx.fillRect(6, 4, 12, 14);
-                    ctx.fillStyle = '#bdc3c7'; ctx.fillRect(8, 6, 8, 10);
-                    ctx.fillStyle = '#7f8c8d'; ctx.fillRect(6, 16, 12, 2);
-                }
-                ctx.restore();
+                let floatY = p.y + Math.sin((gameFrames + p.x) / 15) * 5;
+                this.drawItem(p.type, p.x, floatY);
             });
+        },
+
+        drawItem(type, x, y) {
+            ctx.save(); ctx.translate(x, y);
+            if (type === 'diamond') {
+                ctx.fillStyle = '#4ae8e8'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
+                ctx.fillStyle = '#bdfdfd'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 10); ctx.lineTo(4, 8); ctx.fill();
+            } else if (type === 'emerald') {
+                ctx.fillStyle = '#4de04d'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(16, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
+                ctx.fillStyle = '#90f090'; ctx.beginPath(); ctx.moveTo(9, 2); ctx.lineTo(15, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 11); ctx.lineTo(4, 8); ctx.fill();
+            } else if (type === 'quartz') {
+                ctx.fillStyle = '#e5e5e5'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 10); ctx.lineTo(4, 8); ctx.fill();
+            } else if (type === 'gold') {
+                ctx.fillStyle = '#d4af37'; ctx.fillRect(4, 8, 16, 8); ctx.fillStyle = '#fceabb'; ctx.fillRect(6, 10, 12, 2);
+            } else if (type === 'amethyst') {
+                ctx.fillStyle = '#9966cc'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(20, 12); ctx.lineTo(12, 24); ctx.lineTo(4, 12); ctx.fill();
+                ctx.fillStyle = '#d8b2ff'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(18, 12); ctx.lineTo(12, 14); ctx.lineTo(6, 12); ctx.fill();
+            } else if (type === 'eye') {
+                ctx.fillStyle = '#aaddaa'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#003300'; ctx.beginPath(); ctx.arc(12, 12, 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#000'; ctx.fillRect(11, 10, 2, 4);
+            } else if (type === 'apple') {
+                ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(12, 14, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#5c3f29'; ctx.fillRect(11, 0, 3, 6); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(6, 10, 4, 4);
+            } else if (type === 'chorus') {
+                ctx.fillStyle = '#a040a0'; ctx.fillRect(6, 6, 12, 12); ctx.fillStyle = '#d080d0'; ctx.fillRect(4, 10, 16, 4); ctx.fillRect(10, 4, 4, 16); ctx.fillStyle = '#fff'; ctx.fillRect(10, 10, 4, 4);
+            } else if (type === 'tnt') {
+                ctx.fillStyle = '#db2f2f'; ctx.fillRect(2, 2, 20, 20); ctx.fillStyle = '#ffffff'; ctx.fillRect(2, 8, 20, 8); ctx.fillStyle = '#000000'; ctx.font = "6px 'Press Start 2P'"; ctx.fillText("TNT", 4, 15);
+            } else if (type === 'slime') {
+                ctx.fillStyle = '#55ff55'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#aaffaa'; ctx.fillRect(6, 6, 4, 4);
+            } else if (type === 'elytra') {
+                ctx.fillStyle = '#777788'; ctx.beginPath(); ctx.moveTo(12, 4); ctx.lineTo(20, 20); ctx.lineTo(12, 16); ctx.lineTo(4, 20); ctx.fill();
+            } else if (type === 'blaze') {
+                ctx.fillStyle = '#ffaa00'; ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffff00'; ctx.fillRect(10, 0, 4, 8); ctx.fillRect(10, 16, 4, 8); ctx.fillRect(0, 10, 8, 4); ctx.fillRect(16, 10, 8, 4);
+            } else if (type === 'pearl') {
+                ctx.fillStyle = '#33aaaa'; ctx.beginPath(); ctx.arc(12, 12, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#115555'; ctx.beginPath(); ctx.arc(12, 12, 5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#66ffff'; ctx.fillRect(7, 7, 3, 3);
+            } else if (type === 'clock') {
+                ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(12, 12, 11, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#000000'; ctx.fillRect(11, 6, 2, 6); ctx.fillRect(11, 11, 5, 2);
+            } else if (type === 'swing') {
+                ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(12, 12, 6, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = '#cccccc'; ctx.fillRect(6, 6, 3, 3);
+            } else if (type === 'swiftness') {
+                ctx.fillStyle = '#00ffff'; ctx.fillRect(8, 8, 8, 12); ctx.fillRect(6, 10, 12, 10);
+                ctx.fillStyle = '#5c3f29'; ctx.fillRect(10, 4, 4, 4);
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(9, 11, 2, 4);
+            } else if (type === 'totem') {
+                ctx.fillStyle = '#ffcc00'; ctx.fillRect(8, 2, 8, 6); ctx.fillRect(4, 8, 16, 4); ctx.fillRect(9, 12, 6, 10);
+                ctx.fillStyle = '#55ff55'; ctx.fillRect(8, 9, 2, 2); ctx.fillRect(14, 9, 2, 2);
+            } else if (type === 'magnet') {
+                ctx.strokeStyle = '#ff2222'; ctx.lineWidth = 4.5; ctx.lineCap = 'square';
+                ctx.beginPath(); ctx.arc(12, 10, 6, Math.PI, 0, true); ctx.stroke();
+                ctx.fillStyle = '#dddddd'; ctx.fillRect(4, 10, 5, 3); ctx.fillRect(15, 10, 5, 3);
+            } else if (type === 'overdrive') {
+                ctx.fillStyle = '#ff3333'; ctx.fillRect(6, 6, 12, 12);
+                ctx.fillStyle = '#990000'; ctx.fillRect(8, 8, 8, 8);
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(7, 7, 2, 2);
+            } else if (type === 'hammer') {
+                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(11, 10, 2, 10);
+                ctx.fillStyle = '#4a4a4a'; ctx.fillRect(4, 4, 16, 8);
+                ctx.fillStyle = '#aa00ff'; ctx.fillRect(6, 6, 12, 4);
+            } else if (type === 'shield') {
+                ctx.fillStyle = '#95a5a6'; ctx.fillRect(6, 4, 12, 14);
+                ctx.fillStyle = '#bdc3c7'; ctx.fillRect(8, 6, 8, 10);
+                ctx.fillStyle = '#7f8c8d'; ctx.fillRect(6, 16, 12, 2);
+            }
+            ctx.restore();
         },
 
         update() {
@@ -2323,6 +2318,20 @@
                 this.drawBlock(p.x, p.bottom, this.width, LOGICAL_HEIGHT - p.bottom - ground.h, false); 
                 ctx.globalAlpha = 1.0;
 
+                // Draw hidden item inside pillar body when phasing
+                if (creeper.phaseTimer > 0 && p.hiddenItem && !p.hiddenItem.collected) {
+                    let hid = p.hiddenItem;
+                    let hx = p.x + this.width/2 - 12;
+                    let hy = hid.y;
+                    let pulse = 0.5 + 0.5 * Math.abs(Math.sin(frames / 8));
+                    ctx.save();
+                    ctx.globalAlpha = 0.6 + 0.35 * pulse;
+                    ctx.shadowColor = '#ffffff';
+                    ctx.shadowBlur = 12 + 8 * pulse;
+                    powerups.drawItem(hid.type, hx, hy);
+                    ctx.restore();
+                }
+
                 // Draw End Crystal sitting on the bottom pillar
                 if (p.crystal && !p.crystal.destroyed) {
                     ctx.save();
@@ -2478,6 +2487,31 @@
                         rot: 0
                     };
                 }
+                // ORE levels: embed a hidden item inside the pillar body (visible/collectable while phasing)
+                if (activeLevel >= 27 && activeLevel <= 31) {
+                    let oreRoll = Math.random();
+                    let oreType;
+                    if (oreRoll < 0.12) oreType = 'overdrive';
+                    else if (oreRoll < 0.24) oreType = 'hammer';
+                    else if (oreRoll < 0.36) oreType = 'shield';
+                    else if (oreRoll < 0.46) oreType = 'tnt';
+                    else if (oreRoll < 0.56) oreType = 'apple';
+                    else if (oreRoll < 0.66) oreType = 'swiftness';
+                    else if (oreRoll < 0.74) oreType = 'totem';
+                    else if (oreRoll < 0.82) oreType = 'emerald';
+                    else if (oreRoll < 0.90) oreType = 'chorus';
+                    else oreType = 'slime';
+                    // Place it randomly inside the top or bottom pillar body
+                    let inTop = Math.random() < 0.5;
+                    let hidY;
+                    if (inTop && topPos > 28) {
+                        hidY = Math.random() * (topPos - 28) + 4;
+                    } else {
+                        let botH = (ground.y || LOGICAL_HEIGHT - 30) - (topPos + currentGap);
+                        hidY = (topPos + currentGap) + Math.random() * Math.max(0, botH - 28) + 4;
+                    }
+                    newPillar.hiddenItem = { type: oreType, y: hidY, collected: false };
+                }
                 this.items.push(newPillar);
 
                 let spawnPowerupChance = LEVELS[activeLevel].powerupChance || 0.35;
@@ -2528,6 +2562,19 @@
                                 else { p.destroyed = true; addScore(2); }
                             } else { creeper.takeDamage(); }
                         }
+                    }
+                }
+                // Phase-through: collect hidden items inside ORE pillars
+                if (creeper.phaseTimer > 0 && p.hiddenItem && !p.hiddenItem.collected) {
+                    let hb = creeper.getHitbox();
+                    let hx = p.x + this.width/2 - 12;
+                    let hy = p.hiddenItem.y;
+                    if (hb.right > hx && hb.left < hx + 24 && hb.bottom > hy && hb.top < hy + 24) {
+                        p.hiddenItem.collected = true;
+                        // Create a regular powerup item at this location so collect() fires
+                        let collectable = { x: hx, y: hy, type: p.hiddenItem.type, collected: false };
+                        powerups.items.push(collectable);
+                        powerups.collect(collectable, hy + 12);
                     }
                 }
                 if (!p.destroyed && p.x + this.width < creeper.x && !p.passed) { p.passed = true; if (activeLevel >= 27 && activeLevel <= 31) { breakPillar(p); } else { addScore(1); } }
