@@ -856,7 +856,11 @@
         
         // Win Condition Check
         if (score >= LEVELS[activeLevel].winScore && currentState === state.game) {
-            triggerWin();
+            if (activeLevel === 14 && activeDifficulty !== 'simple') {
+                // Do not win by score, only by defeating the Ender Dragon!
+            } else {
+                triggerWin();
+            }
         } else {
             playScoreSound();
         }
@@ -1688,7 +1692,10 @@
 
         setTransform(type, name, colorClass) {
             this.transform = type; this.transformTimer = 480; 
-            transformAlert.innerText = name; transformAlert.innerHTML = `<span class="${colorClass}">${name}</span>`; transformAlert.classList.remove('hidden');
+            let isChallenge = (activeLevel >= 18 && activeLevel <= 26) || (activeLevel >= 32 && activeLevel <= 34);
+            if (!isChallenge) {
+                transformAlert.innerText = name; transformAlert.innerHTML = `<span class="${colorClass}">${name}</span>`; transformAlert.classList.remove('hidden');
+            }
         },
 
         reset() {
@@ -2114,6 +2121,7 @@
 
         collect(p, actY) {
             p.collected = true; let cx = p.x + 12; let cy = actY + 12;
+            let isChallenge = (activeLevel >= 18 && activeLevel <= 26) || (activeLevel >= 32 && activeLevel <= 34);
             
             if (['diamond','quartz','amethyst'].includes(p.type)) {
                 addScore(5); effects.addExplosion(cx, cy, ['#4ae8e8', '#ffffff'], 15, 0.5); effects.addText(cx, cy, "+5", "#4ae8e8");
@@ -2125,44 +2133,44 @@
                     creeper.invincibleTimer = 360; effects.addExplosion(cx, cy, ['#FFD700', '#FFA500', '#FFFFFF'], 20, 0.5); effects.addText(cx, cy, "INVINCIBLE", "#FFD700");
                 } else if (p.type === 'chorus') {
                     creeper.shrinkTimer = 480; effects.addExplosion(cx, cy, ['#a040a0', '#ffffff'], 20, 0.5); effects.addText(cx, cy, "SHRINK", "#a040a0");
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedShrink', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedShrink', 'true');
                 } else if (p.type === 'tnt') {
                     this.triggerTNT(cx, cy);
                 } else if (p.type === 'slime') {
                     creeper.setTransform('slime', 'SLIME BOUNCE!', 'text-green-400'); effects.addExplosion(cx, cy, ['#55ff55', '#aaffaa'], 25, 0.8);
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSlime', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedSlime', 'true');
                 } else if (p.type === 'elytra') {
                     creeper.setTransform('elytra', 'ELYTRA GLIDE!', 'text-gray-300'); effects.addExplosion(cx, cy, ['#777788', '#ffffff'], 25, 0.8);
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedElytra', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedElytra', 'true');
                 } else if (p.type === 'blaze') {
                     creeper.setTransform('blaze', 'BLAZE FIRE!', 'text-orange-400'); effects.addExplosion(cx, cy, ['#ffaa00', '#ff0000'], 30, 1.0);
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedBlaze', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedBlaze', 'true');
                 } else if (p.type === 'pearl') {
                     creeper.phaseTimer = 360; effects.addExplosion(cx, cy, ['#33aaaa', '#cc00ff'], 25, 0.8); effects.addText(cx, cy, "PHASE", "#66ffff");
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedPhase', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedPhase', 'true');
                 } else if (p.type === 'clock') {
                     creeper.slowMoTimer = 480; effects.addExplosion(cx, cy, ['#ffd700', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SLOW MO", "#ffd700");
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSlow', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedSlow', 'true');
                 } else if (p.type === 'swing') {
                     creeper.setTransform('swing', 'SWING MODE!', 'text-amber-600'); effects.addExplosion(cx, cy, ['#8b5a2b', '#ffffff'], 25, 0.8);
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSwing', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedSwing', 'true');
                 } else if (p.type === 'swiftness') {
                     creeper.swiftnessTimer = 360; effects.addExplosion(cx, cy, ['#00ffff', '#00d2ff', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SPEED BOOST!", "#00ffff");
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSwiftness', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedSwiftness', 'true');
                 } else if (p.type === 'totem') {
                     creeper.totemCount++; effects.addExplosion(cx, cy, ['#ffd700', '#55ff55', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "TOTEM x" + creeper.totemCount, "#ffd700");
                 } else if (p.type === 'magnet') {
                     creeper.magnetTimer = 480; effects.addExplosion(cx, cy, ['#aa55ff', '#ddbaff', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "MAGNET ACTIVE", "#b280ff");
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedMagnet', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedMagnet', 'true');
                 } else if (p.type === 'overdrive') {
                     creeper.overdriveTimer = 360; effects.addExplosion(cx, cy, ['#ff2222', '#ff8888', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "REDSTONE OVERDRIVE!", "#ff3333");
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedOverdrive', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedOverdrive', 'true');
                 } else if (p.type === 'hammer') {
                     creeper.hammerTimer = 360; effects.addExplosion(cx, cy, ['#8e44ad', '#bb88ff', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "HAMMER TIME!", "#b280ff");
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedHammer', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedHammer', 'true');
                 } else if (p.type === 'shield') {
                     creeper.shieldCount = Math.min(3, creeper.shieldCount + 3); effects.addExplosion(cx, cy, ['#bdc3c7', '#95a5a6', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "SHIELD CHARGED", "#bdc3c7");
-                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedShield', 'true');
+                    if (!isChallenge) localStorage.setItem('flappyCreeperUnlockedShield', 'true');
                 }
             }
         },
