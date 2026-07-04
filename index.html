@@ -2520,15 +2520,17 @@
                         if (hb.top < p.top || hb.bottom > p.bottom) {
                             if (creeper.phaseTimer > 0) { } 
                             else if (creeper.invincibleTimer > 0) {
-                                p.destroyed = true; addScore(2); triggerShake(6, 6);
+                                triggerShake(6, 6);
                                 let lvl = LEVELS[activeLevel].pillar;
                                 effects.addExplosion(p.x + this.width/2, creeper.y + creeper.currentSize/2, [lvl.top, lvl.side, '#4c9f38'], 35, 1.2);
                                 effects.addText(p.x + this.width/2, creeper.y, "SMASH!", "#FFD700");
+                                if (activeLevel >= 27 && activeLevel <= 31) { breakPillar(p); }
+                                else { p.destroyed = true; addScore(2); }
                             } else { creeper.takeDamage(); }
                         }
                     }
                 }
-                if (!p.destroyed && p.x + this.width < creeper.x && !p.passed) { addScore(1); p.passed = true; }
+                if (!p.destroyed && p.x + this.width < creeper.x && !p.passed) { p.passed = true; if (activeLevel >= 27 && activeLevel <= 31) { breakPillar(p); } else { addScore(1); } }
                 if (p.x + this.width < 0) this.items.shift();
             });
         },
