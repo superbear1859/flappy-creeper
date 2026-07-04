@@ -2497,9 +2497,6 @@
                     else if (pRoll < 0.50) pType = 'pearl'; else if (pRoll < 0.57) pType = 'clock';
                     else if (pRoll < 0.64) pType = 'swing'; else if (pRoll < 0.71) pType = 'swiftness';
                     else if (pRoll < 0.78) pType = 'totem'; else if (pRoll < 0.85) pType = 'magnet';
-                    else if (pRoll < 0.90 && (activeLevel >= 27 && activeLevel <= 31)) pType = 'overdrive';
-                    else if (pRoll < 0.94 && (activeLevel >= 27 && activeLevel <= 31)) pType = 'hammer';
-                    else if (pRoll < 0.98 && (activeLevel >= 27 && activeLevel <= 31)) pType = 'shield';
                     else {
                         let appleMult = LEVELS[activeLevel].appleChanceMult || 1.0;
                         let appleThreshold = 0.85 + (0.05 * appleMult);
