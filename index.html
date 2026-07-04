@@ -500,6 +500,15 @@
             enemies: ['vex'],
             points: { small: 'amethyst', large: 'eye' },
             speedMult: 1.15, pillarGap: 170, spawnDist: 185, powerupChance: 0.0
+        },
+        {
+            name: "Mini Creeper", winScore: 40,
+            bg: 'crimson_forest', cloudType: 'ash',
+            ground: { top: '#b81d1d', side: '#751313', detail: '#3e0808' },
+            pillar: { top: '#500000', side: '#300000', detail: '#1a0000' },
+            enemies: ['bat'],
+            points: { small: 'quartz', large: 'gold' },
+            speedMult: 1.1, pillarGap: 160, spawnDist: 180, powerupChance: 0.0
         }
     ];
     let activeLevel = 0;
@@ -555,6 +564,7 @@
         localStorage.removeItem('flappyCreeperUnlockedSwing');
         localStorage.removeItem('flappyCreeperUnlockedSwiftness');
         localStorage.removeItem('flappyCreeperUnlockedMagnet');
+        localStorage.removeItem('flappyCreeperUnlockedShrink');
         updateMenuLocks();
         switchTab(0);
         cancelResetProgress();
@@ -572,7 +582,7 @@
         
         const levelIndices = [];
         if (activeTab === 3) {
-            for (let i = 18; i <= 25; i++) {
+            for (let i = 18; i <= 26; i++) {
                 levelIndices.push(i);
             }
         } else {
@@ -596,8 +606,8 @@
             const lvl = LEVELS[i];
             
             let isUnlocked = false;
-            if (i >= 18 && i <= 25) {
-                const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing', 'flappyCreeperUnlockedSwiftness', 'flappyCreeperUnlockedMagnet'];
+            if (i >= 18 && i <= 26) {
+                const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing', 'flappyCreeperUnlockedSwiftness', 'flappyCreeperUnlockedMagnet', 'flappyCreeperUnlockedShrink'];
                 isUnlocked = localStorage.getItem(keys[i - 18]) === 'true';
             } else if (i >= 15 && i <= 17) {
                 isUnlocked = true;
@@ -632,8 +642,8 @@
             if (i === 14 && activeDifficulty !== 'simple') titleText += " [BOSS FIGHT]";
             
             let goalText = "";
-            if (i >= 18 && i <= 25) {
-                const unlockItems = ['Slime', 'Elytra', 'Blaze Rod', 'Ender Pearl', 'Clock', 'Lead', 'Swiftness Potion', 'Magnet'];
+            if (i >= 18 && i <= 26) {
+                const unlockItems = ['Slime', 'Elytra', 'Blaze Rod', 'Ender Pearl', 'Clock', 'Lead', 'Swiftness Potion', 'Magnet', 'Chorus Fruit'];
                 goalText = isUnlocked ? `Goal: ${lvl.winScore} Points` : `Unlock: Collect ${unlockItems[i - 18]} in game`;
             } else if (i === 14 && activeDifficulty !== 'simple') {
                 goalText = isUnlocked ? "Goal: Defeat Ender Dragon" : "Goal: Defeat Ender Dragon (Locked)";
@@ -1187,6 +1197,8 @@
                 this.swiftnessTimer = 999999;
             } else if (activeLevel === 25) {
                 this.magnetTimer = 999999;
+            } else if (activeLevel === 26) {
+                this.shrinkTimer = 999999;
             } else if (this.transformTimer > 0) {
                 if (--this.transformTimer === 0) { this.transform = 'none'; transformAlert.classList.add('hidden'); }
             } else { this.transform = 'none'; }
@@ -1839,6 +1851,7 @@
                     creeper.invincibleTimer = 360; effects.addExplosion(cx, cy, ['#FFD700', '#FFA500', '#FFFFFF'], 20, 0.5); effects.addText(cx, cy, "INVINCIBLE", "#FFD700");
                 } else if (p.type === 'chorus') {
                     creeper.shrinkTimer = 480; effects.addExplosion(cx, cy, ['#a040a0', '#ffffff'], 20, 0.5); effects.addText(cx, cy, "SHRINK", "#a040a0");
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedShrink', 'true');
                 } else if (p.type === 'tnt') {
                     this.triggerTNT(cx, cy);
                 } else if (p.type === 'slime') {
@@ -2511,8 +2524,8 @@
             isLevelPlayable = unlockedLevel >= 10;
         } else if (levelIndex === 17) {
             isLevelPlayable = localStorage.getItem('enderDragonBeaten') === 'true';
-        } else if (levelIndex >= 18 && levelIndex <= 25) {
-            const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing', 'flappyCreeperUnlockedSwiftness', 'flappyCreeperUnlockedMagnet'];
+        } else if (levelIndex >= 18 && levelIndex <= 26) {
+            const keys = ['flappyCreeperUnlockedSlime', 'flappyCreeperUnlockedElytra', 'flappyCreeperUnlockedBlaze', 'flappyCreeperUnlockedPhase', 'flappyCreeperUnlockedSlow', 'flappyCreeperUnlockedSwing', 'flappyCreeperUnlockedSwiftness', 'flappyCreeperUnlockedMagnet', 'flappyCreeperUnlockedShrink'];
             isLevelPlayable = localStorage.getItem(keys[levelIndex - 18]) === 'true';
         }
 
