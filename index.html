@@ -1874,10 +1874,12 @@
                     if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSwing', 'true');
                 } else if (p.type === 'swiftness') {
                     creeper.swiftnessTimer = 360; effects.addExplosion(cx, cy, ['#00ffff', '#00d2ff', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SPEED BOOST!", "#00ffff");
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSwiftness', 'true');
                 } else if (p.type === 'totem') {
                     creeper.hasTotem = true; effects.addExplosion(cx, cy, ['#ffd700', '#55ff55', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "TOTEM READY", "#ffd700");
                 } else if (p.type === 'magnet') {
                     creeper.magnetTimer = 480; effects.addExplosion(cx, cy, ['#aa55ff', '#ddbaff', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "MAGNET ACTIVE", "#b280ff");
+                    if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedMagnet', 'true');
                 }
             }
         },
