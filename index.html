@@ -975,7 +975,7 @@
         invincibleTimer: 0, shrinkTimer: 0, phaseTimer: 0, slowMoTimer: 0, transformTimer: 0, transform: 'none', isDying: false, dyingTimer: 0,
         isSwinging: false, swingAnchorX: 0, swingAnchorY: 0, swingR: 0,
         lives: 3, maxLives: 3,
-        swiftnessTimer: 0, hasTotem: false, magnetTimer: 0,
+        swiftnessTimer: 0, totemCount: 0, magnetTimer: 0,
 
         draw() {
             if (this.exploded) return;
@@ -1124,7 +1124,7 @@
                 ctx.stroke();
                 ctx.restore();
             }
-            if (this.hasTotem) {
+            if (this.totemCount > 0) {
                 ctx.save();
                 ctx.translate(this.x + this.currentSize/2 - 6, this.y - 18 + Math.sin(frames / 10) * 3);
                 // Gold wings/body
@@ -1136,6 +1136,12 @@
                 ctx.fillStyle = '#55ff55';
                 ctx.fillRect(2, 5, 2, 2);
                 ctx.fillRect(8, 5, 2, 2);
+
+                if (this.totemCount > 1) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = "6px 'Press Start 2P'";
+                    ctx.fillText("x" + this.totemCount, 16, 8);
+                }
                 ctx.restore();
             }
         },
@@ -1358,8 +1364,8 @@
         takeDamage() {
             if (this.invincibleTimer > 0 || this.isDying || this.exploded) return;
             
-            if (this.hasTotem) {
-                this.hasTotem = false;
+            if (this.totemCount > 0) {
+                this.totemCount--;
                 this.invincibleTimer = 180;
                 this.velocity = -this.jump * 0.9;
                 if (this.y + this.currentSize >= ground.y) {
@@ -1434,7 +1440,7 @@
             this.x = 80; this.y = 200; this.velocity = 0; this.rotation = 0; this.exploded = false;
             this.isDying = false; this.dyingTimer = 0;
             this.invincibleTimer = 0; this.shrinkTimer = 0; this.transformTimer = 0; this.phaseTimer = 0; this.slowMoTimer = 0;
-            this.swiftnessTimer = 0; this.hasTotem = false; this.magnetTimer = 0;
+            this.swiftnessTimer = 0; this.totemCount = 0; this.magnetTimer = 0;
             this.transform = 'none'; this.currentSize = this.baseSize; this.gravityActive = this.gravityBase;
             this.isSwinging = false; this.swingAnchorX = 0; this.swingAnchorY = 0; this.swingR = 0;
             this.lives = (activeLevel === 14 && activeDifficulty !== 'simple') ? 3 : 1; this.maxLives = this.lives;
@@ -1876,7 +1882,7 @@
                     creeper.swiftnessTimer = 360; effects.addExplosion(cx, cy, ['#00ffff', '#00d2ff', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "SPEED BOOST!", "#00ffff");
                     if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedSwiftness', 'true');
                 } else if (p.type === 'totem') {
-                    creeper.hasTotem = true; effects.addExplosion(cx, cy, ['#ffd700', '#55ff55', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "TOTEM READY", "#ffd700");
+                    creeper.totemCount++; effects.addExplosion(cx, cy, ['#ffd700', '#55ff55', '#ffffff'], 30, 0.9); effects.addText(cx, cy, "TOTEM x" + creeper.totemCount, "#ffd700");
                 } else if (p.type === 'magnet') {
                     creeper.magnetTimer = 480; effects.addExplosion(cx, cy, ['#aa55ff', '#ddbaff', '#ffffff'], 25, 0.8); effects.addText(cx, cy, "MAGNET ACTIVE", "#b280ff");
                     if (activeLevel < 18) localStorage.setItem('flappyCreeperUnlockedMagnet', 'true');
