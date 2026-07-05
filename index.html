@@ -1338,11 +1338,22 @@
                     let dist = 28;
                     let sx = Math.cos(angle) * dist;
                     let sy = Math.sin(angle) * dist;
-                    ctx.translate(sx - 4, sy - 5);
-                    ctx.fillStyle = '#95a5a6';
-                    ctx.fillRect(0, 0, 8, 10);
-                    ctx.fillStyle = '#bdc3c7';
-                    ctx.fillRect(1, 1, 6, 8);
+                    ctx.translate(sx - 5, sy - 6);
+                    // Glow
+                    ctx.shadowColor = '#00eeff';
+                    ctx.shadowBlur = 8;
+                    // Dark border
+                    ctx.fillStyle = '#1a2a2e';
+                    ctx.fillRect(0, 0, 10, 12);
+                    // Main plate face (bright so it stands out on any bg)
+                    ctx.fillStyle = '#cde8ec';
+                    ctx.fillRect(1, 1, 8, 10);
+                    // Cyan sheen
+                    ctx.fillStyle = '#7eddee';
+                    ctx.fillRect(2, 2, 5, 3);
+                    // White highlight pip
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(2, 2, 2, 2);
                     ctx.restore();
                 }
             }
