@@ -2109,7 +2109,7 @@
                 if (!p.collected && !creeper.exploded) {
                     let floatY = p.y + Math.sin((gameFrames + p.x) / 15) * 5;
                     
-                    if (creeper.magnetTimer > 0) {
+                    if (creeper.magnetTimer > 0 && p.type !== 'overdrive' && p.type !== 'hammer' && p.type !== 'shield') {
                         let targetX = creeper.x + creeper.currentSize / 2 - 12;
                         let targetY = creeper.y + creeper.currentSize / 2 - 12;
                         let dx = targetX - p.x;
