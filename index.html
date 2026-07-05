@@ -1723,7 +1723,7 @@
             this.isDying = false; this.dyingTimer = 0;
             this.invincibleTimer = 0; this.shrinkTimer = 0; this.transformTimer = 0; this.phaseTimer = 0; this.slowMoTimer = 0;
             this.swiftnessTimer = 0; this.totemCount = 0; this.magnetTimer = 0;
-            this.overdriveTimer = 0; this.hammerTimer = 0; this.shieldCount = 0; this.laserCooldown = 0;
+            this.overdriveTimer = 0; this.hammerTimer = 0; this.shieldCount = (activeLevel === 34) ? 3 : 0; this.laserCooldown = 0;
             this.transform = 'none'; this.currentSize = this.baseSize; this.gravityActive = this.gravityBase;
             this.isSwinging = false; this.swingAnchorX = 0; this.swingAnchorY = 0; this.swingR = 0;
             this.lives = (activeLevel === 14 && activeDifficulty !== 'simple') ? 3 : 1; this.maxLives = this.lives;
