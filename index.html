@@ -880,7 +880,9 @@
             // If the hidden item was already collected while phasing, skip the drop
             if (pil.hiddenItem && pil.hiddenItem.collected) return;
             
-            let itemType = pil.hiddenItem ? pil.hiddenItem.type : 'diamond';
+            // Only drop the three ore-exclusive power-ups
+            let itemType = pil.hiddenItem ? pil.hiddenItem.type
+                : (['overdrive', 'hammer', 'shield'][Math.floor(Math.random() * 3)]);
             
             powerups.items.push({
                 x: pil.x + pillars.width/2 - 12,
@@ -2491,18 +2493,9 @@
                 }
                 // ORE levels: embed a hidden item inside the pillar body (visible/collectable while phasing)
                 if (activeLevel >= 27 && activeLevel <= 31) {
-                    let oreRoll = Math.random();
-                    let oreType;
-                    if (oreRoll < 0.12) oreType = 'overdrive';
-                    else if (oreRoll < 0.24) oreType = 'hammer';
-                    else if (oreRoll < 0.36) oreType = 'shield';
-                    else if (oreRoll < 0.46) oreType = 'tnt';
-                    else if (oreRoll < 0.56) oreType = 'apple';
-                    else if (oreRoll < 0.66) oreType = 'swiftness';
-                    else if (oreRoll < 0.74) oreType = 'totem';
-                    else if (oreRoll < 0.82) oreType = 'emerald';
-                    else if (oreRoll < 0.90) oreType = 'chorus';
-                    else oreType = 'slime';
+                    // Only the three ore-exclusive power-ups
+                    const oreTypes = ['overdrive', 'hammer', 'shield'];
+                    let oreType = oreTypes[Math.floor(Math.random() * 3)];
                     // Place it randomly inside the top or bottom pillar body
                     let inTop = Math.random() < 0.5;
                     let hidY;
