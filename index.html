@@ -583,6 +583,16 @@
             enemies: ['vex'],
             points: { small: 'amethyst', large: 'eye' },
             speedMult: 1.1, pillarGap: 165, spawnDist: 180, powerupChance: 0.0
+        },
+        {
+            name: "Netherite Core", winScore: 55,
+            bg: 'nether_fortress', cloudType: 'ash',
+            ground: { top: '#3c3535', side: '#2c2525', detail: '#1a1a1a' },
+            pillar: { top: '#4c4545', side: '#3c3535', detail: '#2c2525' },
+            enemies: ['fireball', 'wither_skull', 'wither_skeleton'],
+            points: { small: 'lapis', large: 'netherite' },
+            speedMult: 1.1, pillarGap: 165, spawnDist: 180, powerupChance: 0.50,
+            appleChanceMult: 2.0
         }
     ];
     let activeLevel = 0;
@@ -666,6 +676,9 @@
             for (let i = 27; i <= 31; i++) {
                 levelIndices.push(i);
             }
+            if (unlockedOreLevel >= 32) {
+                levelIndices.push(35);
+            }
         } else if (activeTab === 4) {
             for (let i = 18; i <= 26; i++) {
                 levelIndices.push(i);
@@ -703,7 +716,7 @@
             } else if (i >= 27 && i <= 31) {
                 let dragonBeaten = localStorage.getItem('enderDragonBeaten') === 'true';
                 isUnlocked = dragonBeaten && i <= unlockedOreLevel;
-            } else if (i >= 15 && i <= 17) {
+            } else if ((i >= 15 && i <= 17) || i === 35) {
                 isUnlocked = true;
             } else {
                 isUnlocked = i <= unlockedLevel;
@@ -727,7 +740,7 @@
             } else if (((i >= 18 && i <= 26) || (i >= 32 && i <= 34)) && isUnlocked) {
                 btn.className = `level-btn unlocked border-orange-500 shadow-[0_0_12px_rgba(255,165,0,0.3)]`;
                 titleClass = 'text-orange-400 font-bold';
-            } else if (i >= 15 && i <= 17) {
+            } else if ((i >= 15 && i <= 17) || i === 35) {
                 btn.className = `level-btn unlocked border-yellow-500 shadow-[0_0_12px_rgba(255,215,0,0.3)]`;
                 titleClass = 'text-yellow-400 font-bold';
             } else if (i >= 27 && i <= 31 && isUnlocked) {
@@ -739,7 +752,7 @@
             if (i >= 18 && i <= 26) num = `CHALLENGE ${i - 17}`;
             else if (i >= 32 && i <= 34) num = `CHALLENGE ${i - 22}`;
             else if (i >= 27 && i <= 31) num = `ORE ${i - 26}`;
-            else if (i >= 15 && i <= 17) num = "BONUS";
+            else if ((i >= 15 && i <= 17) || i === 35) num = "BONUS";
             else num = `${(i % 5) + 1}`;
             
             let titleText = ((i >= 18 && i <= 26) || (i >= 32 && i <= 34)) ? `${num}: ${lvl.name.toUpperCase()}` : `${num}. ${lvl.name.toUpperCase()}`;
@@ -876,7 +889,7 @@
             effects.addExplosion(pil.x + pillars.width/2, LOGICAL_HEIGHT/2, [colors.top, colors.side, '#ffffff'], 20, 1.0);
         }
         
-        if (activeLevel >= 27 && activeLevel <= 31) {
+        if ((activeLevel >= 27 && activeLevel <= 31) || activeLevel === 35) {
             // If the hidden item was already collected while phasing, skip the drop
             if (pil.hiddenItem && pil.hiddenItem.collected) return;
             
@@ -2097,6 +2110,15 @@
                 ctx.fillStyle = '#95a5a6'; ctx.fillRect(6, 4, 12, 14);
                 ctx.fillStyle = '#bdc3c7'; ctx.fillRect(8, 6, 8, 10);
                 ctx.fillStyle = '#7f8c8d'; ctx.fillRect(6, 16, 12, 2);
+            } else if (type === 'lapis') {
+                ctx.fillStyle = '#1e3f66'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 8); ctx.lineTo(12, 24); ctx.lineTo(0, 8); ctx.fill();
+                ctx.fillStyle = '#2e5b88'; ctx.beginPath(); ctx.moveTo(12, 2); ctx.lineTo(20, 8); ctx.lineTo(12, 10); ctx.lineTo(4, 8); ctx.fill();
+                ctx.fillStyle = '#ffd700'; ctx.fillRect(10, 10, 2, 2); ctx.fillRect(14, 6, 2, 2);
+            } else if (type === 'netherite') {
+                ctx.fillStyle = '#2d2525'; ctx.fillRect(4, 8, 16, 8);
+                ctx.fillStyle = '#1e1818'; ctx.fillRect(4, 15, 16, 1);
+                ctx.fillStyle = '#403535'; ctx.fillRect(6, 9, 12, 2);
+                ctx.fillStyle = '#a6834c'; ctx.fillRect(14, 10, 2, 2);
             }
             ctx.restore();
         },
@@ -2133,10 +2155,12 @@
             p.collected = true; let cx = p.x + 12; let cy = actY + 12;
             let isChallenge = (activeLevel >= 18 && activeLevel <= 26) || (activeLevel >= 32 && activeLevel <= 34);
             
-            if (['diamond','quartz','amethyst'].includes(p.type)) {
-                addScore(5); effects.addExplosion(cx, cy, ['#4ae8e8', '#ffffff'], 15, 0.5); effects.addText(cx, cy, "+5", "#4ae8e8");
-            } else if (['emerald','gold','eye'].includes(p.type)) {
-                addScore(10); effects.addExplosion(cx, cy, ['#4de04d', '#ffffff'], 20, 0.6); effects.addText(cx, cy, "+10", "#4de04d");
+            if (['diamond','quartz','amethyst','lapis'].includes(p.type)) {
+                let pColor = p.type === 'lapis' ? '#2e5b88' : '#4ae8e8';
+                addScore(5); effects.addExplosion(cx, cy, [pColor, '#ffffff'], 15, 0.5); effects.addText(cx, cy, "+5", pColor);
+            } else if (['emerald','gold','eye','netherite'].includes(p.type)) {
+                let pColor = p.type === 'netherite' ? '#4c4545' : '#4de04d';
+                addScore(10); effects.addExplosion(cx, cy, [pColor, '#ffffff'], 20, 0.6); effects.addText(cx, cy, "+10", pColor);
             } else {
                 playPowerupSound();
                 if (p.type === 'apple') {
@@ -2403,15 +2427,16 @@
                 ctx.fillRect(x + 15, isTop ? y + h - 18 : y, 2, 8);
                 ctx.fillRect(x + 45, isTop ? y + h - 18 : y, 2, 8);
                 ctx.fillRect(x + 30, isTop ? y + h - 10 : y + 8, 2, 8);
-            } else if (activeLevel >= 27 && activeLevel <= 34) {
+            } else if (activeLevel >= 27 && activeLevel <= 35) {
                 let baseColor = '#7a7a7a';
                 if (activeLevel === 33) baseColor = '#4a4a4a';
                 else if (activeLevel === 34) baseColor = '#bdc3c7';
+                else if (activeLevel === 35) baseColor = '#2c2525';
                 
                 ctx.fillStyle = baseColor;
                 ctx.fillRect(x, y, w, h);
                 
-                ctx.fillStyle = activeLevel === 34 ? '#95a5a6' : '#555555';
+                ctx.fillStyle = activeLevel === 34 ? '#95a5a6' : (activeLevel === 35 ? '#181212' : '#555555');
                 for (let i = 0; i < h; i += 16) {
                     ctx.fillRect(x, y + i, w, 2);
                     let offset = (Math.floor(i / 16) % 2 === 0 ? 0 : 15);
@@ -2428,6 +2453,7 @@
                     else if (activeLevel === 31) speckleColor = '#2ecc71';
                     else if (activeLevel === 32) speckleColor = '#ff3333';
                     else if (activeLevel === 33) speckleColor = '#aa00ff';
+                    else if (activeLevel === 35) speckleColor = '#cc6600';
                     
                     ctx.fillStyle = speckleColor;
                     for (let i = 4; i < h - 12; i += 16) {
@@ -2503,7 +2529,7 @@
                     };
                 }
                 // ORE levels: embed a hidden item inside the pillar body (visible/collectable while phasing)
-                if (activeLevel >= 27 && activeLevel <= 31) {
+                if ((activeLevel >= 27 && activeLevel <= 31) || activeLevel === 35) {
                     // Only the three ore-exclusive power-ups
                     const oreTypes = ['overdrive', 'hammer', 'shield'];
                     let oreType = oreTypes[Math.floor(Math.random() * 3)];
@@ -2561,7 +2587,7 @@
                             if (creeper.phaseTimer > 0) { } 
                             else if (creeper.invincibleTimer > 0) {
                                 triggerShake(6, 6);
-                                if (activeLevel >= 27 && activeLevel <= 31) {
+                                if ((activeLevel >= 27 && activeLevel <= 31) || activeLevel === 35) {
                                     breakPillar(p, false);
                                 } else {
                                     let lvl = LEVELS[activeLevel].pillar;
@@ -2590,7 +2616,7 @@
                     p.passed = true;
                     addScore(1);
                     // In ORE levels, drop the hidden item when passing through the gap (pillar stays intact)
-                    if (activeLevel >= 27 && activeLevel <= 31 && p.hiddenItem && !p.hiddenItem.collected) {
+                    if (((activeLevel >= 27 && activeLevel <= 31) || activeLevel === 35) && p.hiddenItem && !p.hiddenItem.collected) {
                         p.hiddenItem.collected = true;
                         powerups.items.push({
                             x: p.x + this.width/2 - 12,
@@ -2916,7 +2942,7 @@
         let notes = END_MUSIC;
         let type = 'end';
         
-        if (activeLevel < 5 || activeLevel === 15) {
+        if (activeLevel < 5 || activeLevel === 15 || (activeLevel >= 27 && activeLevel <= 31) || activeLevel === 35 || (activeLevel >= 32 && activeLevel <= 34)) {
             notes = OVERWORLD_MUSIC;
             type = 'overworld';
             beatInterval = Math.max(22, 60 - (progression * 38));
@@ -2955,6 +2981,8 @@
         } else if (levelIndex >= 32 && levelIndex <= 34) {
             const keys = ['flappyCreeperUnlockedOverdrive', 'flappyCreeperUnlockedHammer', 'flappyCreeperUnlockedShield'];
             isLevelPlayable = localStorage.getItem(keys[levelIndex - 32]) === 'true';
+        } else if (levelIndex === 35) {
+            isLevelPlayable = unlockedOreLevel >= 32;
         }
 
         if (!isLevelPlayable) return;
@@ -3007,7 +3035,7 @@
         } else if (activeLevel === 14) {
             localStorage.setItem('enderDragonBeaten', 'true');
             updateMenuLocks();
-        } else if (activeLevel >= 27 && activeLevel <= 30 && activeLevel === unlockedOreLevel) {
+        } else if (activeLevel >= 27 && activeLevel <= 31 && activeLevel === unlockedOreLevel) {
             unlockedOreLevel++;
             localStorage.setItem('flappyCreeperUnlockedOre', unlockedOreLevel);
             updateMenuLocks();
@@ -3121,9 +3149,9 @@
             if (cheatBuffer === CHEAT_CODE) {
                 cheatBuffer = "";
                 unlockedLevel = 14;
-                unlockedOreLevel = 31;
+                unlockedOreLevel = 32;
                 localStorage.setItem('flappyCreeperUnlocked2', 14);
-                localStorage.setItem('flappyCreeperUnlockedOre', 31);
+                localStorage.setItem('flappyCreeperUnlockedOre', 32);
                 localStorage.setItem('enderDragonBeaten', 'true');
                 localStorage.setItem('flappyCreeperUnlockedSlime', 'true');
                 localStorage.setItem('flappyCreeperUnlockedElytra', 'true');
