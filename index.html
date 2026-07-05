@@ -866,13 +866,15 @@
         }
     }
 
-    function breakPillar(pil) {
+    function breakPillar(pil, explode = true) {
         if (pil.destroyed) return;
         pil.destroyed = true;
         addScore(1);
         
-        let colors = LEVELS[activeLevel].pillar;
-        effects.addExplosion(pil.x + pillars.width/2, LOGICAL_HEIGHT/2, [colors.top, colors.side, '#ffffff'], 20, 1.0);
+        if (explode) {
+            let colors = LEVELS[activeLevel].pillar;
+            effects.addExplosion(pil.x + pillars.width/2, LOGICAL_HEIGHT/2, [colors.top, colors.side, '#ffffff'], 20, 1.0);
+        }
         
         if (activeLevel >= 27 && activeLevel <= 31) {
             // If the hidden item was already collected while phasing, skip the drop
@@ -2577,7 +2579,7 @@
                         powerups.collect(collectable, hy + 12);
                     }
                 }
-                if (!p.destroyed && p.x + this.width < creeper.x && !p.passed) { p.passed = true; if (activeLevel >= 27 && activeLevel <= 31) { breakPillar(p); } else { addScore(1); } }
+                if (!p.destroyed && p.x + this.width < creeper.x && !p.passed) { p.passed = true; if (activeLevel >= 27 && activeLevel <= 31) { breakPillar(p, false); } else { addScore(1); } }
                 if (p.x + this.width < 0) this.items.shift();
             });
         },
